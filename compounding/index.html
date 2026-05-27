@@ -1,36 +1,39 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/ahowa/Downloads/compounding/index.html -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Compound Interest Calculator — Ahmed Howaidi</title>
-  <meta name="description" content="Interactive compound interest calculator. See how your investments grow over time with the power of compounding.">
-  <link rel="preconnect" href="https://fonts.googleapis.com/">
-  <link href="./Index_files/css2" rel="stylesheet">
-  <script src="./Index_files/chart.umd.js.download"></script>
+  <meta name="description" content="Interactive compound interest calculator. See how your investments grow over time.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <style>
     :root {
-      --gold: #C9A84C;
-      --gold-dim: rgba(201,168,76,0.15);
-      --gold-line: rgba(201,168,76,0.3);
-      --dark:  #080C10;
-      --dark2: #0F1419;
-      --dark3: #161D25;
-      --dark4: #1E2730;
-      --text:  #E8E8E8;
-      --text-dim: #8A9099;
-      --text-muted: #4A5260;
-      --green: #1D9E75;
-      --green-dim: rgba(29,158,117,0.12);
-      --border: rgba(255,255,255,0.06);
+      --gold:       #C9A84C;
+      --gold-glow:  rgba(201,168,76,0.18);
+      --gold-line:  rgba(201,168,76,0.3);
+      --navy1:      #060D1F;
+      --navy2:      #0A1628;
+      --navy3:      #0F1E38;
+      --navy4:      #162040;
+      --navy5:      #1E2D50;
+      --text:       #EDF0F7;
+      --text-dim:   #8A96B0;
+      --text-muted: #4A5570;
+      --green:      #1D9E75;
+      --border:     rgba(255,255,255,0.07);
+      --border-gold: rgba(201,168,76,0.22);
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
+
     body {
-      background: var(--dark);
+      background: linear-gradient(160deg, var(--navy1) 0%, var(--navy2) 40%, var(--navy3) 100%);
+      background-attachment: fixed;
       color: var(--text);
       font-family: 'Inter', sans-serif;
-      font-size: 15px;
       font-weight: 300;
       line-height: 1.6;
       min-height: 100vh;
@@ -38,219 +41,209 @@
 
     /* ── NAV ── */
     nav {
-      position: fixed; top: 0; left: 0; right: 0;
-      z-index: 100;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 2rem;
-      height: 60px;
-      background: rgba(8,12,16,0.92);
-      backdrop-filter: blur(12px);
+      padding: 0 1.5rem; height: 56px;
+      background: rgba(6,13,31,0.88);
+      backdrop-filter: blur(16px);
       border-bottom: 0.5px solid var(--border);
     }
     .nav-brand {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 18px;
-      font-weight: 400;
-      color: var(--gold);
-      text-decoration: none;
-      letter-spacing: 0.04em;
+      font-size: 17px; font-weight: 400;
+      color: var(--gold); text-decoration: none; letter-spacing: 0.04em;
     }
     .nav-back {
-      font-size: 12px;
-      font-weight: 400;
-      color: var(--text-dim);
-      text-decoration: none;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      transition: color 0.2s;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-dim);
+      text-decoration: none; transition: color 0.2s;
     }
     .nav-back:hover { color: var(--gold); }
     .nav-back::before { content: '← '; }
 
     /* ── HERO ── */
     .hero {
-      padding: 120px 2rem 60px;
-      max-width: 880px;
-      margin: 0 auto;
-      border-bottom: 0.5px solid var(--border);
+      padding: 100px 1.5rem 40px;
+      max-width: 680px; margin: 0 auto; text-align: center;
     }
     .hero-tag {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 1rem;
+      display: inline-block;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--gold);
+      border: 1px solid var(--border-gold);
+      padding: 5px 14px; border-radius: 20px;
+      margin-bottom: 1.2rem;
+      background: rgba(201,168,76,0.06);
     }
     .hero-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(36px, 6vw, 58px);
-      font-weight: 300;
-      line-height: 1.1;
-      color: var(--text);
-      margin-bottom: 1rem;
+      font-size: clamp(32px, 8vw, 52px);
+      font-weight: 300; line-height: 1.1; color: var(--text);
+      margin-bottom: 0.8rem;
     }
     .hero-title span { color: var(--gold); }
     .hero-desc {
-      font-size: 14px;
-      color: var(--text-dim);
-      max-width: 520px;
-      line-height: 1.7;
+      font-size: 14px; color: var(--text-dim); max-width: 420px;
+      margin: 0 auto; line-height: 1.7;
     }
 
-    /* ── MAIN LAYOUT ── */
+    /* ── CONTAINER ── */
     .container {
-      max-width: 880px;
-      margin: 0 auto;
-      padding: 3rem 2rem 6rem;
+      max-width: 680px; margin: 0 auto;
+      padding: 0 1.5rem 5rem;
     }
 
-    /* ── CONTROLS ── */
-    .controls-section {
-      background: var(--dark2);
-      border: 0.5px solid var(--border);
-      border-radius: 12px;
-      padding: 2rem;
-      margin-bottom: 2rem;
+    /* ── INPUT CARD ── */
+    .input-card {
+      background: rgba(15,30,56,0.7);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem 1.5rem;
+      margin-bottom: 1.25rem;
+      backdrop-filter: blur(8px);
     }
-    .section-label {
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 1.5rem;
+    .card-title {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--text-muted);
+      margin-bottom: 1.25rem;
     }
-    .slider-grid {
+    .fields-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.5rem 2.5rem;
+      gap: 1rem;
     }
-    @media (max-width: 600px) { .slider-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 480px) { .fields-grid { grid-template-columns: 1fr; } }
 
-    .field-item { display: flex; flex-direction: column; gap: 8px; }
-    .field-name {
-      font-size: 11px; font-weight: 500; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--text-muted);
+    .field-item { display: flex; flex-direction: column; gap: 6px; }
+    .field-label {
+      font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-dim);
     }
     .field-wrap {
       display: flex; align-items: center;
-      background: var(--dark3);
-      border: 1px solid rgba(201,168,76,0.15);
-      border-radius: 8px; overflow: hidden; transition: border-color 0.2s;
+      background: rgba(6,13,31,0.6);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; overflow: hidden;
+      transition: border-color 0.2s, background 0.2s;
     }
-    .field-wrap:focus-within { border-color: var(--gold); background: rgba(201,168,76,0.04); }
-    .field-prefix { padding: 0 8px 0 14px; font-size: 14px; color: var(--text-muted); user-select: none; }
+    .field-wrap:focus-within {
+      border-color: var(--border-gold);
+      background: rgba(201,168,76,0.04);
+    }
+    .field-prefix, .field-suffix {
+      padding: 0 10px; font-size: 13px;
+      color: var(--text-muted); user-select: none; white-space: nowrap;
+    }
     .field-input {
       flex: 1; background: transparent; border: none; outline: none;
-      font-size: 17px; font-weight: 500; color: var(--gold);
-      font-family: 'Inter', sans-serif; font-variant-numeric: tabular-nums;
-      padding: 13px 4px; min-width: 0;
+      font-size: 16px; font-weight: 500; color: var(--gold);
+      font-family: 'Inter', sans-serif;
+      font-variant-numeric: tabular-nums;
+      padding: 12px 4px; min-width: 0; width: 100%;
     }
-    .field-suffix { padding: 0 14px 0 4px; font-size: 13px; color: var(--text-muted); user-select: none; }
+    /* Remove number input arrows */
+    .field-input::-webkit-outer-spin-button,
+    .field-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .field-input[type=number] { -moz-appearance: textfield; }
+
+    /* ── CALCULATE BUTTON ── */
+    .calc-btn {
+      width: 100%; padding: 16px;
+      background: linear-gradient(135deg, #B8952A 0%, var(--gold) 50%, #D4B84A 100%);
+      color: #0A1628; font-family: 'Inter', sans-serif;
+      font-size: 14px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      border: none; border-radius: 12px; cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+      box-shadow: 0 4px 20px rgba(201,168,76,0.25);
+      margin-top: 0.25rem;
+    }
+    .calc-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(201,168,76,0.35);
+    }
+    .calc-btn:active { transform: scale(0.98); }
+
+    /* ── RESULTS (hidden until calculated) ── */
+    .results { display: none; }
+    .results.visible { display: block; }
 
     /* ── METRICS ── */
     .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border: 0.5px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 2rem;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      margin-bottom: 1.25rem;
     }
-    @media (max-width: 640px) { .metrics-grid { grid-template-columns: 1fr 1fr; } }
     .metric-card {
-      background: var(--dark2);
-      padding: 1.25rem 1.5rem;
+      background: rgba(15,30,56,0.75);
+      padding: 1.25rem 1.25rem;
+      backdrop-filter: blur(8px);
     }
     .metric-label {
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 6px;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;
     }
     .metric-val {
-      font-size: 22px;
-      font-weight: 500;
-      color: var(--text);
-      font-variant-numeric: tabular-nums;
-      line-height: 1.2;
+      font-size: clamp(18px, 4vw, 24px); font-weight: 600;
+      color: var(--text); font-variant-numeric: tabular-nums; line-height: 1.2;
     }
     .metric-val.accent { color: var(--green); }
-    .metric-sub {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
+    .metric-val.gold { color: var(--gold); }
+    .metric-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
     /* ── CHART ── */
-    .chart-section {
-      background: var(--dark2);
-      border: 0.5px solid var(--border);
-      border-radius: 12px;
-      padding: 2rem;
-      margin-bottom: 2rem;
+    .chart-card {
+      background: rgba(15,30,56,0.7);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      backdrop-filter: blur(8px);
     }
     .chart-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 8px;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem; flex-wrap: wrap; gap: 8px;
     }
     .legend {
-      display: flex; gap: 1.25rem; flex-wrap: wrap;
+      display: flex; gap: 1rem; flex-wrap: wrap;
     }
     .legend-item {
-      display: flex; align-items: center; gap: 6px;
+      display: flex; align-items: center; gap: 5px;
       font-size: 11px; color: var(--text-dim);
     }
-    .legend-dot {
-      width: 8px; height: 8px; border-radius: 2px;
-    }
-    .chart-wrap {
-      position: relative; width: 100%; height: 280px;
-    }
+    .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+    .chart-wrap { position: relative; width: 100%; height: 240px; }
 
     /* ── TABLE ── */
-    .table-section {
-      background: var(--dark2);
-      border: 0.5px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
+    .table-card {
+      background: rgba(15,30,56,0.7);
+      border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      margin-bottom: 1.25rem;
+      backdrop-filter: blur(8px);
     }
-    .table-header {
-      padding: 1.5rem 1.5rem 1rem;
+    .table-head-row {
+      padding: 1.25rem 1.25rem 0.75rem;
       border-bottom: 0.5px solid var(--border);
     }
-    .table-wrap { overflow-x: auto; }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table { width: 100%; border-collapse: collapse; }
     thead th {
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      padding: 10px 1.5rem;
-      text-align: right;
-      border-bottom: 0.5px solid var(--border);
-      white-space: nowrap;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 8px 1rem; text-align: right;
+      border-bottom: 0.5px solid var(--border); white-space: nowrap;
     }
     thead th:first-child { text-align: left; }
-    tbody tr {
-      border-bottom: 0.5px solid rgba(255,255,255,0.03);
-      transition: background 0.15s;
-    }
+    tbody tr { border-bottom: 0.5px solid rgba(255,255,255,0.03); }
     tbody tr:last-child { border-bottom: none; }
     tbody tr:hover { background: rgba(255,255,255,0.02); }
     tbody td {
-      font-size: 13px;
-      font-weight: 300;
-      padding: 10px 1.5rem;
-      text-align: right;
-      color: var(--text-dim);
-      font-variant-numeric: tabular-nums;
+      font-size: 12px; font-weight: 300;
+      padding: 9px 1rem; text-align: right;
+      color: var(--text-dim); font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
     tbody td:first-child { text-align: left; color: var(--text-muted); }
@@ -259,302 +252,162 @@
     tbody tr.milestone td:first-child { color: var(--gold); font-weight: 500; }
 
     /* ── QUOTE ── */
-    .quote-section {
-      margin-top: 3rem;
-      padding: 2rem;
-      border-left: 2px solid var(--gold-line);
+    .quote {
+      padding: 1.5rem;
+      border-left: 2px solid var(--border-gold);
+      margin-bottom: 3rem;
     }
     .quote-text {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 20px;
-      font-weight: 300;
-      color: var(--text-dim);
-      line-height: 1.5;
-      font-style: italic;
+      font-size: 18px; font-weight: 300;
+      color: var(--text-dim); line-height: 1.5; font-style: italic;
     }
     .quote-attr {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 8px;
-      letter-spacing: 0.08em;
+      font-size: 11px; color: var(--text-muted);
+      margin-top: 8px; letter-spacing: 0.08em;
     }
 
     /* ── FOOTER ── */
     footer {
       border-top: 0.5px solid var(--border);
-      padding: 2rem;
-      text-align: center;
+      padding: 1.5rem; text-align: center;
     }
-    .footer-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-    .footer-name a { color: var(--gold); text-decoration: none; }
+    footer a { color: var(--gold); text-decoration: none; font-size: 13px; }
   </style>
 </head>
 <body>
 
 <nav>
-  <a href="file:///C:/" class="nav-brand">Ahmed Howaidi</a>
-  <a href="file:///C:/" class="nav-back">Home</a>
+  <a href="/" class="nav-brand">Ahmed Howaidi</a>
+  <a href="/" class="nav-back">Home</a>
 </nav>
 
 <div class="hero">
   <div class="hero-tag">Financial Tools</div>
   <h1 class="hero-title">Compound Interest<br><span>Calculator</span></h1>
-  <p class="hero-desc">See the snowball effect in action — how consistent investing and time combine to grow wealth exponentially.</p>
+  <p class="hero-desc">Type your numbers and discover the snowball effect — how time and consistency build extraordinary wealth.</p>
 </div>
 
 <div class="container">
 
-  <!-- CONTROLS -->
-  <div class="controls-section">
-    <div class="section-label">Parameters</div>
-    <div class="slider-grid">
+  <!-- INPUT CARD -->
+  <div class="input-card">
+    <div class="card-title">Your parameters</div>
+    <div class="fields-grid">
       <div class="field-item">
-        <div class="field-name">Initial investment</div>
+        <div class="field-label">Initial investment</div>
         <div class="field-wrap">
           <span class="field-prefix">$</span>
-          <input class="field-input" id="principal" type="number" min="0" step="1000" value="10000" inputmode="numeric" oninput="if(typeof calc===&#39;function&#39;)calc()" onkeydown="if(event.key===&#39;Enter&#39;)this.blur()">
+          <input class="field-input" id="principal" type="number" min="0" step="1000" value="10000" inputmode="numeric" placeholder="10000">
         </div>
       </div>
       <div class="field-item">
-        <div class="field-name">Monthly contribution</div>
+        <div class="field-label">Monthly contribution</div>
         <div class="field-wrap">
           <span class="field-prefix">$</span>
-          <input class="field-input" id="monthly" type="number" min="0" step="50" value="200" inputmode="numeric" oninput="if(typeof calc===&#39;function&#39;)calc()" onkeydown="if(event.key===&#39;Enter&#39;)this.blur()">
+          <input class="field-input" id="monthly" type="number" min="0" step="50" value="200" inputmode="numeric" placeholder="200">
           <span class="field-suffix">/ mo</span>
         </div>
       </div>
       <div class="field-item">
-        <div class="field-name">Annual return rate</div>
+        <div class="field-label">Annual return rate</div>
         <div class="field-wrap">
-          <input class="field-input" id="rate" type="number" min="0.1" max="100" step="0.5" value="7" inputmode="decimal" oninput="if(typeof calc===&#39;function&#39;)calc()" onkeydown="if(event.key===&#39;Enter&#39;)this.blur()">
+          <input class="field-input" id="rate" type="number" min="0.1" max="100" step="0.5" value="7" inputmode="decimal" placeholder="7">
           <span class="field-suffix">%</span>
         </div>
       </div>
       <div class="field-item">
-        <div class="field-name">Time horizon</div>
+        <div class="field-label">Time horizon</div>
         <div class="field-wrap">
-          <input class="field-input" id="years" type="number" min="1" max="100" step="1" value="20" inputmode="numeric" oninput="if(typeof calc===&#39;function&#39;)calc()" onkeydown="if(event.key===&#39;Enter&#39;)this.blur()">
+          <input class="field-input" id="years" type="number" min="1" max="100" step="1" value="20" inputmode="numeric" placeholder="20">
           <span class="field-suffix">years</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- METRICS -->
-  <div class="metrics-grid">
-    <div class="metric-card">
-      <div class="metric-label">Final balance</div>
-      <div class="metric-val" id="m-final">$144,573</div>
-      <div class="metric-sub" id="m-final-sub">after 20 years</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Interest earned</div>
-      <div class="metric-val accent" id="m-gain">$86,573</div>
-      <div class="metric-sub" id="m-gain-sub">+149.3% on capital</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Total invested</div>
-      <div class="metric-val" id="m-invested">$58,000</div>
-      <div class="metric-sub" id="m-inv-sub">principal + contributions</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Return on investment</div>
-      <div class="metric-val accent" id="m-roi">+149.3%</div>
-      <div class="metric-sub">on total capital</div>
-    </div>
-  </div>
+  <button class="calc-btn" onclick="calculate()">
+    💰 &nbsp;Calculate your Financial Freedom
+  </button>
 
-  <!-- CHART -->
-  <div class="chart-section">
-    <div class="chart-header">
-      <div class="section-label" style="margin:0;">Growth curve</div>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#C9A84C;"></div>Total balance</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#2C3540; border: 1px solid #4A5260;"></div>Total invested</div>
-        <div class="legend-item"><div class="legend-dot" style="background:rgba(29,158,117,0.5);"></div>Interest earned</div>
+  <!-- RESULTS — hidden until button clicked -->
+  <div class="results" id="results">
+
+    <div style="height: 1.5rem;"></div>
+
+    <!-- METRICS -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Final balance</div>
+        <div class="metric-val gold" id="m-final">—</div>
+        <div class="metric-sub" id="m-final-sub">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Interest earned</div>
+        <div class="metric-val accent" id="m-gain">—</div>
+        <div class="metric-sub" id="m-gain-sub">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Total invested</div>
+        <div class="metric-val" id="m-invested">—</div>
+        <div class="metric-sub">principal + contributions</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Return on investment</div>
+        <div class="metric-val accent" id="m-roi">—</div>
+        <div class="metric-sub">on total capital</div>
       </div>
     </div>
-    <div class="chart-wrap">
-      <canvas id="growthChart" role="img" aria-label="Line chart showing compound balance growth versus total amount invested over years" width="938" height="350" style="display: block; box-sizing: border-box; height: 280px; width: 750px;">Balance and invested capital over time.</canvas>
-    </div>
-  </div>
 
-  <!-- TABLE -->
-  <div class="table-section">
-    <div class="table-header">
-      <div class="section-label" style="margin:0;">Year-by-year breakdown</div>
+    <!-- CHART -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="card-title" style="margin:0;">Growth curve</div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#C9A84C;"></div>Balance</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#2C3A55; border:1px solid #4A5570;"></div>Invested</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(29,158,117,0.6);"></div>Interest</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="growthChart" role="img" aria-label="Compound interest growth chart">Growth over time.</canvas>
+      </div>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Year</th>
-            <th>Balance</th>
-            <th>Total invested</th>
-            <th>Interest earned</th>
-            <th>Yearly gain</th>
-            <th>ROI</th>
-          </tr>
-        </thead>
-        <tbody id="breakdown"><tr class="">
-      <td>1</td>
-      <td>$13,201</td>
-      <td>$12,400</td>
-      <td class="pos">+$801</td>
-      <td class="pos">+$801</td>
-      <td class="pos">+6.5%</td>
-    </tr><tr class="">
-      <td>2</td>
-      <td>$16,634</td>
-      <td>$14,800</td>
-      <td class="pos">+$1,834</td>
-      <td class="pos">+$1,033</td>
-      <td class="pos">+12.4%</td>
-    </tr><tr class="">
-      <td>3</td>
-      <td>$20,315</td>
-      <td>$17,200</td>
-      <td class="pos">+$3,115</td>
-      <td class="pos">+$1,281</td>
-      <td class="pos">+18.1%</td>
-    </tr><tr class="">
-      <td>4</td>
-      <td>$24,262</td>
-      <td>$19,600</td>
-      <td class="pos">+$4,662</td>
-      <td class="pos">+$1,547</td>
-      <td class="pos">+23.8%</td>
-    </tr><tr class="">
-      <td>5</td>
-      <td>$28,495</td>
-      <td>$22,000</td>
-      <td class="pos">+$6,495</td>
-      <td class="pos">+$1,832</td>
-      <td class="pos">+29.5%</td>
-    </tr><tr class="">
-      <td>6</td>
-      <td>$33,033</td>
-      <td>$24,400</td>
-      <td class="pos">+$8,633</td>
-      <td class="pos">+$2,138</td>
-      <td class="pos">+35.4%</td>
-    </tr><tr class="">
-      <td>7</td>
-      <td>$37,900</td>
-      <td>$26,800</td>
-      <td class="pos">+$11,100</td>
-      <td class="pos">+$2,466</td>
-      <td class="pos">+41.4%</td>
-    </tr><tr class="">
-      <td>8</td>
-      <td>$43,118</td>
-      <td>$29,200</td>
-      <td class="pos">+$13,918</td>
-      <td class="pos">+$2,818</td>
-      <td class="pos">+47.7%</td>
-    </tr><tr class="">
-      <td>9</td>
-      <td>$48,714</td>
-      <td>$31,600</td>
-      <td class="pos">+$17,114</td>
-      <td class="pos">+$3,196</td>
-      <td class="pos">+54.2%</td>
-    </tr><tr class="milestone">
-      <td>10</td>
-      <td>$54,714</td>
-      <td>$34,000</td>
-      <td class="pos">+$20,714</td>
-      <td class="pos">+$3,600</td>
-      <td class="pos">+60.9%</td>
-    </tr><tr class="">
-      <td>11</td>
-      <td>$61,147</td>
-      <td>$36,400</td>
-      <td class="pos">+$24,747</td>
-      <td class="pos">+$4,034</td>
-      <td class="pos">+68.0%</td>
-    </tr><tr class="">
-      <td>12</td>
-      <td>$68,046</td>
-      <td>$38,800</td>
-      <td class="pos">+$29,246</td>
-      <td class="pos">+$4,499</td>
-      <td class="pos">+75.4%</td>
-    </tr><tr class="">
-      <td>13</td>
-      <td>$75,444</td>
-      <td>$41,200</td>
-      <td class="pos">+$34,244</td>
-      <td class="pos">+$4,998</td>
-      <td class="pos">+83.1%</td>
-    </tr><tr class="">
-      <td>14</td>
-      <td>$83,376</td>
-      <td>$43,600</td>
-      <td class="pos">+$39,776</td>
-      <td class="pos">+$5,532</td>
-      <td class="pos">+91.2%</td>
-    </tr><tr class="">
-      <td>15</td>
-      <td>$91,882</td>
-      <td>$46,000</td>
-      <td class="pos">+$45,882</td>
-      <td class="pos">+$6,106</td>
-      <td class="pos">+99.7%</td>
-    </tr><tr class="">
-      <td>16</td>
-      <td>$101,003</td>
-      <td>$48,400</td>
-      <td class="pos">+$52,603</td>
-      <td class="pos">+$6,721</td>
-      <td class="pos">+108.7%</td>
-    </tr><tr class="">
-      <td>17</td>
-      <td>$110,783</td>
-      <td>$50,800</td>
-      <td class="pos">+$59,983</td>
-      <td class="pos">+$7,380</td>
-      <td class="pos">+118.1%</td>
-    </tr><tr class="">
-      <td>18</td>
-      <td>$121,270</td>
-      <td>$53,200</td>
-      <td class="pos">+$68,070</td>
-      <td class="pos">+$8,087</td>
-      <td class="pos">+128.0%</td>
-    </tr><tr class="">
-      <td>19</td>
-      <td>$132,515</td>
-      <td>$55,600</td>
-      <td class="pos">+$76,915</td>
-      <td class="pos">+$8,845</td>
-      <td class="pos">+138.3%</td>
-    </tr><tr class="milestone">
-      <td>20</td>
-      <td>$144,573</td>
-      <td>$58,000</td>
-      <td class="pos">+$86,573</td>
-      <td class="pos">+$9,658</td>
-      <td class="pos">+149.3%</td>
-    </tr></tbody>
-      </table>
-    </div>
-  </div>
 
-  <!-- QUOTE -->
-  <div class="quote-section">
-    <p class="quote-text">"Compound interest is the eighth wonder of the world. He who understands it, earns it; he who doesn't, pays it."</p>
-    <p class="quote-attr">— Albert Einstein</p>
-  </div>
+    <!-- TABLE -->
+    <div class="table-card">
+      <div class="table-head-row">
+        <div class="card-title" style="margin:0;">Year-by-year breakdown</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Balance</th>
+              <th>Invested</th>
+              <th>Total gain</th>
+              <th>Yearly gain</th>
+              <th>ROI</th>
+            </tr>
+          </thead>
+          <tbody id="breakdown"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- QUOTE -->
+    <div class="quote">
+      <p class="quote-text">"Compound interest is the eighth wonder of the world. He who understands it, earns it; he who doesn't, pays it."</p>
+      <p class="quote-attr">— Albert Einstein</p>
+    </div>
+
+  </div><!-- /results -->
 
 </div>
 
 <footer>
-  <p class="footer-name"><a href="file:///C:/">ahmedhowaidi.com</a></p>
+  <a href="/">ahmedhowaidi.com</a>
 </footer>
 
 <script>
@@ -562,22 +415,21 @@ let chart;
 
 function money(n) {
   const abs = Math.abs(Math.round(n));
-  if (abs >= 1000000) return '$' + (Math.round(n/10000)/100).toFixed(2) + 'M';
+  if (abs >= 1000000) return '$' + (Math.round(n / 10000) / 100).toFixed(2) + 'M';
   if (abs >= 1000) return '$' + Math.round(n).toLocaleString();
   return '$' + Math.round(n);
 }
 
+function calculate() {
+  const P = parseFloat(document.getElementById('principal').value) || 0;
+  const m = parseFloat(document.getElementById('monthly').value) || 0;
+  const r = parseFloat(document.getElementById('rate').value) || 0;
+  const Y = parseInt(document.getElementById('years').value) || 1;
 
-function calc() {
-  const P = parseFloat(document.getElementById('principal').value);
-  const m = parseFloat(document.getElementById('monthly').value);
-  const r = parseFloat(document.getElementById('rate').value);
-  const Y = parseInt(document.getElementById('years').value);
-
-
+  if (P <= 0 && m <= 0) { alert('Please enter an initial investment or monthly contribution.'); return; }
+  if (r <= 0) { alert('Please enter an annual return rate.'); return; }
 
   const monthly_rate = r / 100 / 12;
-
   const balances = [P];
   const investeds = [P];
   const interests = [0];
@@ -588,7 +440,6 @@ function calc() {
 
   for (let y = 1; y <= Y; y++) {
     let yr_interest = 0;
-    const bal_start = balance;
     for (let mo = 0; mo < 12; mo++) {
       const interest = balance * monthly_rate;
       yr_interest += interest;
@@ -599,14 +450,7 @@ function calc() {
     balances.push(balance);
     investeds.push(invested);
     interests.push(cumInterest);
-    rows.push({
-      y,
-      balance,
-      invested,
-      cumInterest,
-      yr_interest,
-      roi: ((balance - invested) / invested) * 100
-    });
+    rows.push({ y, balance, invested, cumInterest, yr_interest, roi: ((balance - invested) / invested) * 100 });
   }
 
   const finalBal = balances[Y];
@@ -615,129 +459,71 @@ function calc() {
   const roi = (totalGain / totalInvested) * 100;
 
   document.getElementById('m-final').textContent = money(finalBal);
-  document.getElementById('m-final-sub').textContent = 'after ' + Y + (Y===1?' year':' years');
+  document.getElementById('m-final-sub').textContent = 'after ' + Y + (Y === 1 ? ' year' : ' years');
   document.getElementById('m-gain').textContent = money(totalGain);
   document.getElementById('m-gain-sub').textContent = '+' + roi.toFixed(1) + '% on capital';
   document.getElementById('m-invested').textContent = money(totalInvested);
   document.getElementById('m-roi').textContent = '+' + roi.toFixed(1) + '%';
 
-  // Chart
   const labels = Array.from({length: Y + 1}, (_, i) => i === 0 ? 'Start' : 'Yr ' + i);
-
   const chartData = {
     labels,
     datasets: [
-      {
-        label: 'Total balance',
-        data: balances,
-        borderColor: '#C9A84C',
-        backgroundColor: 'rgba(201,168,76,0.06)',
-        fill: true,
-        borderWidth: 2,
-        pointRadius: 0,
-        tension: 0.4
-      },
-      {
-        label: 'Total invested',
-        data: investeds,
-        borderColor: '#3A4550',
-        backgroundColor: 'transparent',
-        borderWidth: 1.5,
-        borderDash: [5, 4],
-        pointRadius: 0,
-        tension: 0
-      },
-      {
-        label: 'Interest earned',
-        data: interests,
-        borderColor: '#1D9E75',
-        backgroundColor: 'rgba(29,158,117,0.06)',
-        fill: true,
-        borderWidth: 1.5,
-        pointRadius: 0,
-        tension: 0.4
-      }
+      { label: 'Total balance', data: balances, borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.07)', fill: true, borderWidth: 2, pointRadius: 0, tension: 0.4 },
+      { label: 'Total invested', data: investeds, borderColor: '#3A4F70', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, tension: 0 },
+      { label: 'Interest earned', data: interests, borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.07)', fill: true, borderWidth: 1.5, pointRadius: 0, tension: 0.4 }
     ]
   };
 
   const chartOpts = {
-    responsive: true,
-    maintainAspectRatio: false,
+    responsive: true, maintainAspectRatio: false,
     interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#0F1419',
-        borderColor: 'rgba(201,168,76,0.3)',
-        borderWidth: 0.5,
-        titleColor: '#8A9099',
-        bodyColor: '#E8E8E8',
-        padding: 12,
-        callbacks: {
-          label: ctx => ' ' + ctx.dataset.label + ': ' + money(ctx.parsed.y)
-        }
+        backgroundColor: '#0A1628', borderColor: 'rgba(201,168,76,0.3)',
+        borderWidth: 0.5, titleColor: '#8A96B0', bodyColor: '#EDF0F7', padding: 12,
+        callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + money(ctx.parsed.y) }
       }
     },
     scales: {
-      x: {
-        ticks: {
-          autoSkip: true, maxTicksLimit: 10,
-          font: { size: 10, family: 'Inter' },
-          color: '#4A5260'
-        },
-        grid: { display: false },
-        border: { display: false }
-      },
+      x: { ticks: { autoSkip: true, maxTicksLimit: 8, font: { size: 10 }, color: '#4A5570' }, grid: { display: false }, border: { display: false } },
       y: {
-        ticks: {
-          font: { size: 10, family: 'Inter' },
-          color: '#4A5260',
-          callback: v => {
-            if (v >= 1000000) return '$' + (v/1000000).toFixed(1) + 'M';
-            if (v >= 1000) return '$' + (v/1000).toFixed(0) + 'K';
-            return '$' + v;
-          }
-        },
-        grid: { color: 'rgba(255,255,255,0.04)' },
-        border: { display: false }
+        ticks: { font: { size: 10 }, color: '#4A5570', callback: v => v >= 1000000 ? '$' + (v/1000000).toFixed(1) + 'M' : v >= 1000 ? '$' + (v/1000).toFixed(0) + 'K' : '$' + v },
+        grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }
       }
     }
   };
 
   if (!chart) {
-    chart = new Chart(document.getElementById('growthChart'), {
-      type: 'line',
-      data: chartData,
-      options: chartOpts
-    });
+    chart = new Chart(document.getElementById('growthChart'), { type: 'line', data: chartData, options: chartOpts });
   } else {
     chart.data = chartData;
     chart.update('none');
   }
 
-  // Table — show milestone years + every year if <= 20
   let showRows = rows;
   if (Y > 20) {
-    const milestones = new Set([5, 10, 15, 20, 25, 30, 35, 40, Y]);
+    const milestones = new Set([5, 10, 15, 20, 25, 30, 35, 40, 50, Y]);
     showRows = rows.filter(r => r.y % 5 === 0 || r.y === Y || milestones.has(r.y));
   }
-
   const milestoneYears = new Set([10, 20, 30, Y]);
-
-  document.getElementById('breakdown').innerHTML = showRows.map(r => {
-    const isMilestone = milestoneYears.has(r.y);
-    return `<tr class="${isMilestone ? 'milestone' : ''}">
+  document.getElementById('breakdown').innerHTML = showRows.map(r =>
+    `<tr class="${milestoneYears.has(r.y) ? 'milestone' : ''}">
       <td>${r.y}</td>
       <td>${money(r.balance)}</td>
       <td>${money(r.invested)}</td>
       <td class="pos">+${money(r.cumInterest)}</td>
       <td class="pos">+${money(r.yr_interest)}</td>
       <td class="pos">+${r.roi.toFixed(1)}%</td>
-    </tr>`;
-  }).join('');
+    </tr>`
+  ).join('');
+
+  // Show results and scroll to them
+  const resultsEl = document.getElementById('results');
+  resultsEl.classList.add('visible');
+  setTimeout(() => resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
-
-calc();
 </script>
-
-</body></html>
+</body>
+</html>
