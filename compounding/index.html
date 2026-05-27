@@ -1,23 +1,22 @@
-
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
+<!-- saved from url=(0055)file:///C:/Users/ahowa/Downloads/compounding/index.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Compound Interest Calculator — Ahmed Howaidi</title>
   <meta name="description" content="Interactive compound interest calculator. See how your investments grow over time with the power of compounding.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link href="./Index_files/css2" rel="stylesheet">
+  <script src="./Index_files/chart.umd.js.download"></script>
   <style>
     :root {
       --gold: #C9A84C;
       --gold-dim: rgba(201,168,76,0.15);
       --gold-line: rgba(201,168,76,0.3);
-      --dark:  #0A1628;
-      --dark2: #0F1E38;
-      --dark3: #162040;
-      --dark4: #1E2D50;
+      --dark:  #080C10;
+      --dark2: #0F1419;
+      --dark3: #161D25;
+      --dark4: #1E2730;
       --text:  #E8E8E8;
       --text-dim: #8A9099;
       --text-muted: #4A5260;
@@ -129,63 +128,26 @@
     }
     @media (max-width: 600px) { .slider-grid { grid-template-columns: 1fr; } }
 
-    .slider-item {}
-    .slider-top {
-      display: flex; justify-content: space-between; align-items: baseline;
-      margin-bottom: 8px;
+    .field-item { display: flex; flex-direction: column; gap: 8px; }
+    .field-name {
+      font-size: 11px; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted);
     }
-    .slider-name {
-      font-size: 12px;
-      font-weight: 400;
-      color: var(--text-dim);
-      letter-spacing: 0.04em;
+    .field-wrap {
+      display: flex; align-items: center;
+      background: var(--dark3);
+      border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 8px; overflow: hidden; transition: border-color 0.2s;
     }
-    .slider-value {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--gold);
-      font-variant-numeric: tabular-nums;
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid rgba(201,168,76,0.25);
-      outline: none;
-      width: 110px;
-      text-align: right;
-      padding: 2px 4px;
-      font-family: 'Inter', sans-serif;
-      cursor: text;
-      transition: border-color 0.2s;
+    .field-wrap:focus-within { border-color: var(--gold); background: rgba(201,168,76,0.04); }
+    .field-prefix { padding: 0 8px 0 14px; font-size: 14px; color: var(--text-muted); user-select: none; }
+    .field-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-size: 17px; font-weight: 500; color: var(--gold);
+      font-family: 'Inter', sans-serif; font-variant-numeric: tabular-nums;
+      padding: 13px 4px; min-width: 0;
     }
-    .slider-value:focus {
-      border-bottom-color: var(--gold);
-      background: rgba(201,168,76,0.05);
-    }
-    .slider-value::placeholder { color: var(--text-muted); }
-    input[type=range] {
-      -webkit-appearance: none;
-      width: 100%; height: 2px;
-      background: var(--dark4);
-      border-radius: 2px;
-      outline: none;
-      cursor: pointer;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      background: var(--gold);
-      cursor: pointer;
-      border: 2px solid var(--dark2);
-      transition: transform 0.15s;
-    }
-    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
-    input[type=range]::-moz-range-thumb {
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      background: var(--gold);
-      cursor: pointer;
-      border: 2px solid var(--dark2);
-    }
+    .field-suffix { padding: 0 14px 0 4px; font-size: 13px; color: var(--text-muted); user-select: none; }
 
     /* ── METRICS ── */
     .metrics-grid {
@@ -334,8 +296,8 @@
 <body>
 
 <nav>
-  <a href="/" class="nav-brand">Ahmed Howaidi</a>
-  <a href="/" class="nav-back">Home</a>
+  <a href="file:///C:/" class="nav-brand">Ahmed Howaidi</a>
+  <a href="file:///C:/" class="nav-back">Home</a>
 </nav>
 
 <div class="hero">
@@ -350,41 +312,34 @@
   <div class="controls-section">
     <div class="section-label">Parameters</div>
     <div class="slider-grid">
-      <div class="slider-item">
-        <div class="slider-top">
-          <span class="slider-name">Initial investment</span>
-          <input class="slider-value" id="v-principal" type="text" value="$10,000" inputmode="numeric"
-            onchange="fromInput('principal',this,1000,200000,1000,'$','')"
-            onkeydown="if(event.key==='Enter')this.blur()">
+      <div class="field-item">
+        <div class="field-name">Initial investment</div>
+        <div class="field-wrap">
+          <span class="field-prefix">$</span>
+          <input class="field-input" id="principal" type="number" min="0" step="1000" value="10000" inputmode="numeric" oninput="if(typeof calc===&#39;function&#39;)calc()" onkeydown="if(event.key===&#39;Enter&#39;)this.blur()">
         </div>
-        <input type="range" id="principal" min="1000" max="200000" step="1000" value="10000" oninput="calc()">
       </div>
-      <div class="slider-item">
-        <div class="slider-top">
-          <span class="slider-name">Monthly contribution</span>
-          <input class="slider-value" id="v-monthly" type="text" value="$200 / mo" inputmode="numeric"
-            onchange="fromInput('monthly',this,0,10000,50,'$',' / mo')"
-            onkeydown="if(event.key==='Enter')this.blur()">
+      <div class="field-item">
+        <div class="field-name">Monthly contribution</div>
+        <div class="field-wrap">
+          <span class="field-prefix">$</span>
+          <input class="field-input" id="monthly" type="number" min="0" step="50" value="200" inputmode="numeric" oninput="if(typeof calc===&#39;function&#39;)calc()" onkeydown="if(event.key===&#39;Enter&#39;)this.blur()">
+          <span class="field-suffix">/ mo</span>
         </div>
-        <input type="range" id="monthly" min="0" max="10000" step="50" value="200" oninput="calc()">
       </div>
-      <div class="slider-item">
-        <div class="slider-top">
-          <span class="slider-name">Annual return rate</span>
-          <input class="slider-value" id="v-rate" type="text" value="7.0%" inputmode="decimal"
-            onchange="fromInput('rate',this,1,20,0.5,'','%')"
-            onkeydown="if(event.key==='Enter')this.blur()">
+      <div class="field-item">
+        <div class="field-name">Annual return rate</div>
+        <div class="field-wrap">
+          <input class="field-input" id="rate" type="number" min="0.1" max="100" step="0.5" value="7" inputmode="decimal" oninput="if(typeof calc===&#39;function&#39;)calc()" onkeydown="if(event.key===&#39;Enter&#39;)this.blur()">
+          <span class="field-suffix">%</span>
         </div>
-        <input type="range" id="rate" min="1" max="20" step="0.5" value="7" oninput="calc()">
       </div>
-      <div class="slider-item">
-        <div class="slider-top">
-          <span class="slider-name">Time horizon</span>
-          <input class="slider-value" id="v-years" type="text" value="20 years" inputmode="numeric"
-            onchange="fromInput('years',this,1,40,1,'','years')"
-            onkeydown="if(event.key==='Enter')this.blur()">
+      <div class="field-item">
+        <div class="field-name">Time horizon</div>
+        <div class="field-wrap">
+          <input class="field-input" id="years" type="number" min="1" max="100" step="1" value="20" inputmode="numeric" oninput="if(typeof calc===&#39;function&#39;)calc()" onkeydown="if(event.key===&#39;Enter&#39;)this.blur()">
+          <span class="field-suffix">years</span>
         </div>
-        <input type="range" id="years" min="1" max="40" step="1" value="20" oninput="calc()">
       </div>
     </div>
   </div>
@@ -393,22 +348,22 @@
   <div class="metrics-grid">
     <div class="metric-card">
       <div class="metric-label">Final balance</div>
-      <div class="metric-val" id="m-final">—</div>
-      <div class="metric-sub" id="m-final-sub">—</div>
+      <div class="metric-val" id="m-final">$144,573</div>
+      <div class="metric-sub" id="m-final-sub">after 20 years</div>
     </div>
     <div class="metric-card">
       <div class="metric-label">Interest earned</div>
-      <div class="metric-val accent" id="m-gain">—</div>
-      <div class="metric-sub" id="m-gain-sub">—</div>
+      <div class="metric-val accent" id="m-gain">$86,573</div>
+      <div class="metric-sub" id="m-gain-sub">+149.3% on capital</div>
     </div>
     <div class="metric-card">
       <div class="metric-label">Total invested</div>
-      <div class="metric-val" id="m-invested">—</div>
+      <div class="metric-val" id="m-invested">$58,000</div>
       <div class="metric-sub" id="m-inv-sub">principal + contributions</div>
     </div>
     <div class="metric-card">
       <div class="metric-label">Return on investment</div>
-      <div class="metric-val accent" id="m-roi">—</div>
+      <div class="metric-val accent" id="m-roi">+149.3%</div>
       <div class="metric-sub">on total capital</div>
     </div>
   </div>
@@ -424,7 +379,7 @@
       </div>
     </div>
     <div class="chart-wrap">
-      <canvas id="growthChart" role="img" aria-label="Line chart showing compound balance growth versus total amount invested over years">Balance and invested capital over time.</canvas>
+      <canvas id="growthChart" role="img" aria-label="Line chart showing compound balance growth versus total amount invested over years" width="938" height="350" style="display: block; box-sizing: border-box; height: 280px; width: 750px;">Balance and invested capital over time.</canvas>
     </div>
   </div>
 
@@ -445,7 +400,147 @@
             <th>ROI</th>
           </tr>
         </thead>
-        <tbody id="breakdown"></tbody>
+        <tbody id="breakdown"><tr class="">
+      <td>1</td>
+      <td>$13,201</td>
+      <td>$12,400</td>
+      <td class="pos">+$801</td>
+      <td class="pos">+$801</td>
+      <td class="pos">+6.5%</td>
+    </tr><tr class="">
+      <td>2</td>
+      <td>$16,634</td>
+      <td>$14,800</td>
+      <td class="pos">+$1,834</td>
+      <td class="pos">+$1,033</td>
+      <td class="pos">+12.4%</td>
+    </tr><tr class="">
+      <td>3</td>
+      <td>$20,315</td>
+      <td>$17,200</td>
+      <td class="pos">+$3,115</td>
+      <td class="pos">+$1,281</td>
+      <td class="pos">+18.1%</td>
+    </tr><tr class="">
+      <td>4</td>
+      <td>$24,262</td>
+      <td>$19,600</td>
+      <td class="pos">+$4,662</td>
+      <td class="pos">+$1,547</td>
+      <td class="pos">+23.8%</td>
+    </tr><tr class="">
+      <td>5</td>
+      <td>$28,495</td>
+      <td>$22,000</td>
+      <td class="pos">+$6,495</td>
+      <td class="pos">+$1,832</td>
+      <td class="pos">+29.5%</td>
+    </tr><tr class="">
+      <td>6</td>
+      <td>$33,033</td>
+      <td>$24,400</td>
+      <td class="pos">+$8,633</td>
+      <td class="pos">+$2,138</td>
+      <td class="pos">+35.4%</td>
+    </tr><tr class="">
+      <td>7</td>
+      <td>$37,900</td>
+      <td>$26,800</td>
+      <td class="pos">+$11,100</td>
+      <td class="pos">+$2,466</td>
+      <td class="pos">+41.4%</td>
+    </tr><tr class="">
+      <td>8</td>
+      <td>$43,118</td>
+      <td>$29,200</td>
+      <td class="pos">+$13,918</td>
+      <td class="pos">+$2,818</td>
+      <td class="pos">+47.7%</td>
+    </tr><tr class="">
+      <td>9</td>
+      <td>$48,714</td>
+      <td>$31,600</td>
+      <td class="pos">+$17,114</td>
+      <td class="pos">+$3,196</td>
+      <td class="pos">+54.2%</td>
+    </tr><tr class="milestone">
+      <td>10</td>
+      <td>$54,714</td>
+      <td>$34,000</td>
+      <td class="pos">+$20,714</td>
+      <td class="pos">+$3,600</td>
+      <td class="pos">+60.9%</td>
+    </tr><tr class="">
+      <td>11</td>
+      <td>$61,147</td>
+      <td>$36,400</td>
+      <td class="pos">+$24,747</td>
+      <td class="pos">+$4,034</td>
+      <td class="pos">+68.0%</td>
+    </tr><tr class="">
+      <td>12</td>
+      <td>$68,046</td>
+      <td>$38,800</td>
+      <td class="pos">+$29,246</td>
+      <td class="pos">+$4,499</td>
+      <td class="pos">+75.4%</td>
+    </tr><tr class="">
+      <td>13</td>
+      <td>$75,444</td>
+      <td>$41,200</td>
+      <td class="pos">+$34,244</td>
+      <td class="pos">+$4,998</td>
+      <td class="pos">+83.1%</td>
+    </tr><tr class="">
+      <td>14</td>
+      <td>$83,376</td>
+      <td>$43,600</td>
+      <td class="pos">+$39,776</td>
+      <td class="pos">+$5,532</td>
+      <td class="pos">+91.2%</td>
+    </tr><tr class="">
+      <td>15</td>
+      <td>$91,882</td>
+      <td>$46,000</td>
+      <td class="pos">+$45,882</td>
+      <td class="pos">+$6,106</td>
+      <td class="pos">+99.7%</td>
+    </tr><tr class="">
+      <td>16</td>
+      <td>$101,003</td>
+      <td>$48,400</td>
+      <td class="pos">+$52,603</td>
+      <td class="pos">+$6,721</td>
+      <td class="pos">+108.7%</td>
+    </tr><tr class="">
+      <td>17</td>
+      <td>$110,783</td>
+      <td>$50,800</td>
+      <td class="pos">+$59,983</td>
+      <td class="pos">+$7,380</td>
+      <td class="pos">+118.1%</td>
+    </tr><tr class="">
+      <td>18</td>
+      <td>$121,270</td>
+      <td>$53,200</td>
+      <td class="pos">+$68,070</td>
+      <td class="pos">+$8,087</td>
+      <td class="pos">+128.0%</td>
+    </tr><tr class="">
+      <td>19</td>
+      <td>$132,515</td>
+      <td>$55,600</td>
+      <td class="pos">+$76,915</td>
+      <td class="pos">+$8,845</td>
+      <td class="pos">+138.3%</td>
+    </tr><tr class="milestone">
+      <td>20</td>
+      <td>$144,573</td>
+      <td>$58,000</td>
+      <td class="pos">+$86,573</td>
+      <td class="pos">+$9,658</td>
+      <td class="pos">+149.3%</td>
+    </tr></tbody>
       </table>
     </div>
   </div>
@@ -459,7 +554,7 @@
 </div>
 
 <footer>
-  <p class="footer-name"><a href="/">ahmedhowaidi.com</a></p>
+  <p class="footer-name"><a href="file:///C:/">ahmedhowaidi.com</a></p>
 </footer>
 
 <script>
@@ -472,14 +567,6 @@ function money(n) {
   return '$' + Math.round(n);
 }
 
-function fromInput(sliderId, inputEl, min, max, step, prefix, suffix) {
-  const raw = inputEl.value.replace(/[^0-9.]/g, '');
-  let val = parseFloat(raw);
-  if (isNaN(val)) { calc(); return; }
-  val = Math.min(max, Math.max(min, Math.round(val / step) * step));
-  document.getElementById(sliderId).value = val;
-  calc();
-}
 
 function calc() {
   const P = parseFloat(document.getElementById('principal').value);
@@ -487,14 +574,7 @@ function calc() {
   const r = parseFloat(document.getElementById('rate').value);
   const Y = parseInt(document.getElementById('years').value);
 
-  const vP = document.getElementById('v-principal');
-  const vM = document.getElementById('v-monthly');
-  const vR = document.getElementById('v-rate');
-  const vY = document.getElementById('v-years');
-  if (document.activeElement !== vP) vP.value = money(P);
-  if (document.activeElement !== vM) vM.value = money(m) + ' / mo';
-  if (document.activeElement !== vR) vR.value = r.toFixed(1) + '%';
-  if (document.activeElement !== vY) vY.value = Y + (Y === 1 ? ' year' : ' years');
+
 
   const monthly_rate = r / 100 / 12;
 
@@ -659,5 +739,5 @@ function calc() {
 
 calc();
 </script>
-</body>
-</html>
+
+</body></html>
