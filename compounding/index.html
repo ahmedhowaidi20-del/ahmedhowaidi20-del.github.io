@@ -1,0 +1,663 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compound Interest Calculator — Ahmed Howaidi</title>
+  <meta name="description" content="Interactive compound interest calculator. See how your investments grow over time with the power of compounding.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    :root {
+      --gold: #C9A84C;
+      --gold-dim: rgba(201,168,76,0.15);
+      --gold-line: rgba(201,168,76,0.3);
+      --dark:  #080C10;
+      --dark2: #0F1419;
+      --dark3: #161D25;
+      --dark4: #1E2730;
+      --text:  #E8E8E8;
+      --text-dim: #8A9099;
+      --text-muted: #4A5260;
+      --green: #1D9E75;
+      --green-dim: rgba(29,158,117,0.12);
+      --border: rgba(255,255,255,0.06);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem;
+      height: 60px;
+      background: rgba(8,12,16,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 0.5px solid var(--border);
+    }
+    .nav-brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--gold);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .nav-back {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-dim);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back::before { content: '← '; }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 120px 2rem 60px;
+      max-width: 880px;
+      margin: 0 auto;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .hero-tag {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 6vw, 58px);
+      font-weight: 300;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .hero-title span { color: var(--gold); }
+    .hero-desc {
+      font-size: 14px;
+      color: var(--text-dim);
+      max-width: 520px;
+      line-height: 1.7;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .container {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 3rem 2rem 6rem;
+    }
+
+    /* ── CONTROLS ── */
+    .controls-section {
+      background: var(--dark2);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .section-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+    .slider-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem 2.5rem;
+    }
+    @media (max-width: 600px) { .slider-grid { grid-template-columns: 1fr; } }
+
+    .slider-item {}
+    .slider-top {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 8px;
+    }
+    .slider-name {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-dim);
+      letter-spacing: 0.04em;
+    }
+    .slider-value {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--gold);
+      font-variant-numeric: tabular-nums;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(201,168,76,0.25);
+      outline: none;
+      width: 110px;
+      text-align: right;
+      padding: 2px 4px;
+      font-family: 'Inter', sans-serif;
+      cursor: text;
+      transition: border-color 0.2s;
+    }
+    .slider-value:focus {
+      border-bottom-color: var(--gold);
+      background: rgba(201,168,76,0.05);
+    }
+    .slider-value::placeholder { color: var(--text-muted); }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%; height: 2px;
+      background: var(--dark4);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: pointer;
+      border: 2px solid var(--dark2);
+      transition: transform 0.15s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    input[type=range]::-moz-range-thumb {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: pointer;
+      border: 2px solid var(--dark2);
+    }
+
+    /* ── METRICS ── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 640px) { .metrics-grid { grid-template-columns: 1fr 1fr; } }
+    .metric-card {
+      background: var(--dark2);
+      padding: 1.25rem 1.5rem;
+    }
+    .metric-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .metric-val {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.2;
+    }
+    .metric-val.accent { color: var(--green); }
+    .metric-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── CHART ── */
+    .chart-section {
+      background: var(--dark2);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .chart-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 8px;
+    }
+    .legend {
+      display: flex; gap: 1.25rem; flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--text-dim);
+    }
+    .legend-dot {
+      width: 8px; height: 8px; border-radius: 2px;
+    }
+    .chart-wrap {
+      position: relative; width: 100%; height: 280px;
+    }
+
+    /* ── TABLE ── */
+    .table-section {
+      background: var(--dark2);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 1.5rem 1.5rem 1rem;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 10px 1.5rem;
+      text-align: right;
+      border-bottom: 0.5px solid var(--border);
+      white-space: nowrap;
+    }
+    thead th:first-child { text-align: left; }
+    tbody tr {
+      border-bottom: 0.5px solid rgba(255,255,255,0.03);
+      transition: background 0.15s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    tbody td {
+      font-size: 13px;
+      font-weight: 300;
+      padding: 10px 1.5rem;
+      text-align: right;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    tbody td:first-child { text-align: left; color: var(--text-muted); }
+    tbody td.pos { color: var(--green); }
+    tbody tr.milestone td { color: var(--text); }
+    tbody tr.milestone td:first-child { color: var(--gold); font-weight: 500; }
+
+    /* ── QUOTE ── */
+    .quote-section {
+      margin-top: 3rem;
+      padding: 2rem;
+      border-left: 2px solid var(--gold-line);
+    }
+    .quote-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 300;
+      color: var(--text-dim);
+      line-height: 1.5;
+      font-style: italic;
+    }
+    .quote-attr {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 0.5px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+    }
+    .footer-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .footer-name a { color: var(--gold); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-brand">Ahmed Howaidi</a>
+  <a href="/" class="nav-back">Home</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">Financial Tools</div>
+  <h1 class="hero-title">Compound Interest<br><span>Calculator</span></h1>
+  <p class="hero-desc">See the snowball effect in action — how consistent investing and time combine to grow wealth exponentially.</p>
+</div>
+
+<div class="container">
+
+  <!-- CONTROLS -->
+  <div class="controls-section">
+    <div class="section-label">Parameters</div>
+    <div class="slider-grid">
+      <div class="slider-item">
+        <div class="slider-top">
+          <span class="slider-name">Initial investment</span>
+          <input class="slider-value" id="v-principal" type="text" value="$10,000" inputmode="numeric"
+            onchange="fromInput('principal',this,1000,200000,1000,'$','')"
+            onkeydown="if(event.key==='Enter')this.blur()">
+        </div>
+        <input type="range" id="principal" min="1000" max="200000" step="1000" value="10000" oninput="calc()">
+      </div>
+      <div class="slider-item">
+        <div class="slider-top">
+          <span class="slider-name">Monthly contribution</span>
+          <input class="slider-value" id="v-monthly" type="text" value="$200 / mo" inputmode="numeric"
+            onchange="fromInput('monthly',this,0,10000,50,'$',' / mo')"
+            onkeydown="if(event.key==='Enter')this.blur()">
+        </div>
+        <input type="range" id="monthly" min="0" max="10000" step="50" value="200" oninput="calc()">
+      </div>
+      <div class="slider-item">
+        <div class="slider-top">
+          <span class="slider-name">Annual return rate</span>
+          <input class="slider-value" id="v-rate" type="text" value="7.0%" inputmode="decimal"
+            onchange="fromInput('rate',this,1,20,0.5,'','%')"
+            onkeydown="if(event.key==='Enter')this.blur()">
+        </div>
+        <input type="range" id="rate" min="1" max="20" step="0.5" value="7" oninput="calc()">
+      </div>
+      <div class="slider-item">
+        <div class="slider-top">
+          <span class="slider-name">Time horizon</span>
+          <input class="slider-value" id="v-years" type="text" value="20 years" inputmode="numeric"
+            onchange="fromInput('years',this,1,40,1,'','years')"
+            onkeydown="if(event.key==='Enter')this.blur()">
+        </div>
+        <input type="range" id="years" min="1" max="40" step="1" value="20" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- METRICS -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">Final balance</div>
+      <div class="metric-val" id="m-final">—</div>
+      <div class="metric-sub" id="m-final-sub">—</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Interest earned</div>
+      <div class="metric-val accent" id="m-gain">—</div>
+      <div class="metric-sub" id="m-gain-sub">—</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total invested</div>
+      <div class="metric-val" id="m-invested">—</div>
+      <div class="metric-sub" id="m-inv-sub">principal + contributions</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Return on investment</div>
+      <div class="metric-val accent" id="m-roi">—</div>
+      <div class="metric-sub">on total capital</div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-section">
+    <div class="chart-header">
+      <div class="section-label" style="margin:0;">Growth curve</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#C9A84C;"></div>Total balance</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2C3540; border: 1px solid #4A5260;"></div>Total invested</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(29,158,117,0.5);"></div>Interest earned</div>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="growthChart" role="img" aria-label="Line chart showing compound balance growth versus total amount invested over years">Balance and invested capital over time.</canvas>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-section">
+    <div class="table-header">
+      <div class="section-label" style="margin:0;">Year-by-year breakdown</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Balance</th>
+            <th>Total invested</th>
+            <th>Interest earned</th>
+            <th>Yearly gain</th>
+            <th>ROI</th>
+          </tr>
+        </thead>
+        <tbody id="breakdown"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- QUOTE -->
+  <div class="quote-section">
+    <p class="quote-text">"Compound interest is the eighth wonder of the world. He who understands it, earns it; he who doesn't, pays it."</p>
+    <p class="quote-attr">— Albert Einstein</p>
+  </div>
+
+</div>
+
+<footer>
+  <p class="footer-name"><a href="/">ahmedhowaidi.com</a></p>
+</footer>
+
+<script>
+let chart;
+
+function money(n) {
+  const abs = Math.abs(Math.round(n));
+  if (abs >= 1000000) return '$' + (Math.round(n/10000)/100).toFixed(2) + 'M';
+  if (abs >= 1000) return '$' + Math.round(n).toLocaleString();
+  return '$' + Math.round(n);
+}
+
+function fromInput(sliderId, inputEl, min, max, step, prefix, suffix) {
+  const raw = inputEl.value.replace(/[^0-9.]/g, '');
+  let val = parseFloat(raw);
+  if (isNaN(val)) { calc(); return; }
+  val = Math.min(max, Math.max(min, Math.round(val / step) * step));
+  document.getElementById(sliderId).value = val;
+  calc();
+}
+
+function calc() {
+  const P = parseFloat(document.getElementById('principal').value);
+  const m = parseFloat(document.getElementById('monthly').value);
+  const r = parseFloat(document.getElementById('rate').value);
+  const Y = parseInt(document.getElementById('years').value);
+
+  const vP = document.getElementById('v-principal');
+  const vM = document.getElementById('v-monthly');
+  const vR = document.getElementById('v-rate');
+  const vY = document.getElementById('v-years');
+  if (document.activeElement !== vP) vP.value = money(P);
+  if (document.activeElement !== vM) vM.value = money(m) + ' / mo';
+  if (document.activeElement !== vR) vR.value = r.toFixed(1) + '%';
+  if (document.activeElement !== vY) vY.value = Y + (Y === 1 ? ' year' : ' years');
+
+  const monthly_rate = r / 100 / 12;
+
+  const balances = [P];
+  const investeds = [P];
+  const interests = [0];
+  const rows = [];
+
+  let balance = P;
+  let cumInterest = 0;
+
+  for (let y = 1; y <= Y; y++) {
+    let yr_interest = 0;
+    const bal_start = balance;
+    for (let mo = 0; mo < 12; mo++) {
+      const interest = balance * monthly_rate;
+      yr_interest += interest;
+      balance += interest + m;
+    }
+    cumInterest += yr_interest;
+    const invested = P + m * 12 * y;
+    balances.push(balance);
+    investeds.push(invested);
+    interests.push(cumInterest);
+    rows.push({
+      y,
+      balance,
+      invested,
+      cumInterest,
+      yr_interest,
+      roi: ((balance - invested) / invested) * 100
+    });
+  }
+
+  const finalBal = balances[Y];
+  const totalInvested = P + m * 12 * Y;
+  const totalGain = finalBal - totalInvested;
+  const roi = (totalGain / totalInvested) * 100;
+
+  document.getElementById('m-final').textContent = money(finalBal);
+  document.getElementById('m-final-sub').textContent = 'after ' + Y + (Y===1?' year':' years');
+  document.getElementById('m-gain').textContent = money(totalGain);
+  document.getElementById('m-gain-sub').textContent = '+' + roi.toFixed(1) + '% on capital';
+  document.getElementById('m-invested').textContent = money(totalInvested);
+  document.getElementById('m-roi').textContent = '+' + roi.toFixed(1) + '%';
+
+  // Chart
+  const labels = Array.from({length: Y + 1}, (_, i) => i === 0 ? 'Start' : 'Yr ' + i);
+
+  const chartData = {
+    labels,
+    datasets: [
+      {
+        label: 'Total balance',
+        data: balances,
+        borderColor: '#C9A84C',
+        backgroundColor: 'rgba(201,168,76,0.06)',
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.4
+      },
+      {
+        label: 'Total invested',
+        data: investeds,
+        borderColor: '#3A4550',
+        backgroundColor: 'transparent',
+        borderWidth: 1.5,
+        borderDash: [5, 4],
+        pointRadius: 0,
+        tension: 0
+      },
+      {
+        label: 'Interest earned',
+        data: interests,
+        borderColor: '#1D9E75',
+        backgroundColor: 'rgba(29,158,117,0.06)',
+        fill: true,
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0.4
+      }
+    ]
+  };
+
+  const chartOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#0F1419',
+        borderColor: 'rgba(201,168,76,0.3)',
+        borderWidth: 0.5,
+        titleColor: '#8A9099',
+        bodyColor: '#E8E8E8',
+        padding: 12,
+        callbacks: {
+          label: ctx => ' ' + ctx.dataset.label + ': ' + money(ctx.parsed.y)
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          autoSkip: true, maxTicksLimit: 10,
+          font: { size: 10, family: 'Inter' },
+          color: '#4A5260'
+        },
+        grid: { display: false },
+        border: { display: false }
+      },
+      y: {
+        ticks: {
+          font: { size: 10, family: 'Inter' },
+          color: '#4A5260',
+          callback: v => {
+            if (v >= 1000000) return '$' + (v/1000000).toFixed(1) + 'M';
+            if (v >= 1000) return '$' + (v/1000).toFixed(0) + 'K';
+            return '$' + v;
+          }
+        },
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        border: { display: false }
+      }
+    }
+  };
+
+  if (!chart) {
+    chart = new Chart(document.getElementById('growthChart'), {
+      type: 'line',
+      data: chartData,
+      options: chartOpts
+    });
+  } else {
+    chart.data = chartData;
+    chart.update('none');
+  }
+
+  // Table — show milestone years + every year if <= 20
+  let showRows = rows;
+  if (Y > 20) {
+    const milestones = new Set([5, 10, 15, 20, 25, 30, 35, 40, Y]);
+    showRows = rows.filter(r => r.y % 5 === 0 || r.y === Y || milestones.has(r.y));
+  }
+
+  const milestoneYears = new Set([10, 20, 30, Y]);
+
+  document.getElementById('breakdown').innerHTML = showRows.map(r => {
+    const isMilestone = milestoneYears.has(r.y);
+    return `<tr class="${isMilestone ? 'milestone' : ''}">
+      <td>${r.y}</td>
+      <td>${money(r.balance)}</td>
+      <td>${money(r.invested)}</td>
+      <td class="pos">+${money(r.cumInterest)}</td>
+      <td class="pos">+${money(r.yr_interest)}</td>
+      <td class="pos">+${r.roi.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+}
+
+calc();
+</script>
+</body>
+</html>
