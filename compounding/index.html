@@ -18,11 +18,11 @@
       --navy3:      #0F1E38;
       --navy4:      #162040;
       --navy5:      #1E2D50;
-      --text:       #EDF0F7;
-      --text-dim:   #8A96B0;
-      --text-muted: #4A5570;
-      --green:      #1D9E75;
-      --border:     rgba(255,255,255,0.07);
+      --text:       #1A2535;
+      --text-dim:   #5A6480;
+      --text-muted: #8A94AA;
+      --green:      #0B7A58;
+      --border:     rgba(0,0,0,0.08);
       --border-gold: rgba(201,168,76,0.22);
     }
 
@@ -30,8 +30,7 @@
     html { scroll-behavior: smooth; }
 
     body {
-      background: linear-gradient(160deg, var(--navy1) 0%, var(--navy2) 40%, var(--navy3) 100%);
-      background-attachment: fixed;
+      background: #F7F9FC;
       color: var(--text);
       font-family: 'Inter', sans-serif;
       font-weight: 300;
@@ -44,9 +43,9 @@
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 1.5rem; height: 56px;
-      background: rgba(6,13,31,0.88);
+      background: rgba(255,255,255,0.92);
       backdrop-filter: blur(16px);
-      border-bottom: 0.5px solid var(--border);
+      border-bottom: 0.5px solid rgba(0,0,0,0.08);
     }
     .nav-brand {
       font-family: 'Cormorant Garamond', serif;
@@ -95,12 +94,12 @@
 
     /* ── INPUT CARD ── */
     .input-card {
-      background: rgba(15,30,56,0.7);
-      border: 1px solid var(--border);
+      background: #FFFFFF;
+      border: 1px solid rgba(0,0,0,0.08);
       border-radius: 16px;
       padding: 1.75rem 1.5rem;
       margin-bottom: 1.25rem;
-      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06);
     }
     .card-title {
       font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
@@ -121,14 +120,14 @@
     }
     .field-wrap {
       display: flex; align-items: center;
-      background: rgba(6,13,31,0.6);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: #F0F4FA;
+      border: 1px solid rgba(0,0,0,0.1);
       border-radius: 10px; overflow: hidden;
       transition: border-color 0.2s, background 0.2s;
     }
     .field-wrap:focus-within {
-      border-color: var(--border-gold);
-      background: rgba(201,168,76,0.04);
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.06);
     }
     .field-prefix, .field-suffix {
       padding: 0 10px; font-size: 13px;
@@ -171,15 +170,14 @@
     /* ── METRICS ── */
     .metrics-grid {
       display: grid; grid-template-columns: 1fr 1fr;
-      gap: 1px; background: var(--border);
-      border: 1px solid var(--border);
+      gap: 1px; background: rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.08);
       border-radius: 16px; overflow: hidden;
       margin-bottom: 1.25rem;
     }
     .metric-card {
-      background: rgba(15,30,56,0.75);
+      background: #FFFFFF;
       padding: 1.25rem 1.25rem;
-      backdrop-filter: blur(8px);
     }
     .metric-label {
       font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
@@ -195,11 +193,11 @@
 
     /* ── CHART ── */
     .chart-card {
-      background: rgba(15,30,56,0.7);
-      border: 1px solid var(--border);
+      background: #FFFFFF;
+      border: 1px solid rgba(0,0,0,0.08);
       border-radius: 16px; padding: 1.5rem;
       margin-bottom: 1.25rem;
-      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06);
     }
     .chart-header {
       display: flex; align-items: center;
@@ -219,34 +217,39 @@
     /* ── TABLE ── */
     .table-card {
       background: rgba(15,30,56,0.7);
-      border: 1px solid var(--border);
+      border: 1px solid rgba(0,0,0,0.08);
       border-radius: 16px; overflow: hidden;
       margin-bottom: 1.25rem;
       backdrop-filter: blur(8px);
     }
     .table-head-row {
       padding: 1.25rem 1.25rem 0.75rem;
-      border-bottom: 0.5px solid var(--border);
+      border-bottom: 0.5px solid rgba(0,0,0,0.08);
     }
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table { width: 100%; border-collapse: collapse; }
     thead th {
       font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--text-muted);
-      padding: 8px 1rem; text-align: right;
-      border-bottom: 0.5px solid var(--border); white-space: nowrap;
+      text-transform: uppercase; color: #5A6480;
+      padding: 10px 1rem; text-align: right;
+      background: #EEF2FB;
+      border-bottom: 0.5px solid rgba(0,0,0,0.08); white-space: nowrap;
     }
     thead th:first-child { text-align: left; }
-    tbody tr { border-bottom: 0.5px solid rgba(255,255,255,0.03); }
+    tbody tr { border-bottom: 0.5px solid rgba(0,0,0,0.05); background: #FFFFFF; }
+    tbody tr:nth-child(even) { background: #F4F7FD; }
     tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    tbody tr:hover { background: #D6E4FF !important; transition: background 0.15s; }
+    tbody tr:hover td { color: #0A1628 !important; font-weight: 500; transition: color 0.15s; }
+    tbody tr { transition: background 0.15s; }
+    tbody td { transition: color 0.15s; }
     tbody td {
       font-size: 12px; font-weight: 300;
       padding: 9px 1rem; text-align: right;
-      color: var(--text-dim); font-variant-numeric: tabular-nums;
+      color: #2A3550; font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
-    tbody td:first-child { text-align: left; color: var(--text-muted); }
+    tbody td:first-child { text-align: left; color: #6A7490; }
     tbody td.pos { color: var(--green); }
     tbody tr.milestone td { color: var(--text); }
     tbody tr.milestone td:first-child { color: var(--gold); font-weight: 500; }
@@ -254,7 +257,7 @@
     /* ── QUOTE ── */
     .quote {
       padding: 1.5rem;
-      border-left: 2px solid var(--border-gold);
+      border-left: 2px solid var(--gold-line);
       margin-bottom: 3rem;
     }
     .quote-text {
@@ -269,7 +272,7 @@
 
     /* ── FOOTER ── */
     footer {
-      border-top: 0.5px solid var(--border);
+      border-top: 0.5px solid rgba(0,0,0,0.08);
       padding: 1.5rem; text-align: center;
     }
     footer a { color: var(--gold); text-decoration: none; font-size: 13px; }
@@ -481,16 +484,16 @@ function calculate() {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#0A1628', borderColor: 'rgba(201,168,76,0.3)',
+        backgroundColor: '#1A2535', borderColor: 'rgba(201,168,76,0.3)',
         borderWidth: 0.5, titleColor: '#8A96B0', bodyColor: '#EDF0F7', padding: 12,
         callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + money(ctx.parsed.y) }
       }
     },
     scales: {
-      x: { ticks: { autoSkip: true, maxTicksLimit: 8, font: { size: 10 }, color: '#4A5570' }, grid: { display: false }, border: { display: false } },
+      x: { ticks: { autoSkip: true, maxTicksLimit: 8, font: { size: 10 }, color: '#8A94AA' }, grid: { display: false }, border: { display: false } },
       y: {
-        ticks: { font: { size: 10 }, color: '#4A5570', callback: v => v >= 1000000 ? '$' + (v/1000000).toFixed(1) + 'M' : v >= 1000 ? '$' + (v/1000).toFixed(0) + 'K' : '$' + v },
-        grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }
+        ticks: { font: { size: 10 }, color: '#8A94AA', callback: v => v >= 1000000 ? '$' + (v/1000000).toFixed(1) + 'M' : v >= 1000 ? '$' + (v/1000).toFixed(0) + 'K' : '$' + v },
+        grid: { color: 'rgba(0,0,0,0.06)' }, border: { display: false }
       }
     }
   };
