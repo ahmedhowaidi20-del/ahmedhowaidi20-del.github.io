@@ -432,9 +432,19 @@
       out.push({title:"Periapical radiolucency with a vital pulp \u2014 confirm the source",
         advice:"An apical radiolucency of endodontic origin needs a non-vital pulp. With a vital response, suspect a non-endodontic lesion or one arising from an adjacent tooth. Re-test the neighbouring teeth, review the radiograph and consider further imaging or referral \u2014 do not start root canal treatment on a vital tooth on the radiolucency alone."});
     }
-    if(f.o_prev_rcf && vital){
-      out.push({title:"Root-filled tooth with a vital response \u2014 verify the tooth",
-        advice:"A properly root-filled tooth should not respond to sensibility testing. A vital reading suggests the wrong tooth was tested, or an untreated / missed canal. Confirm the tooth and review the radiograph for missed anatomy."});
+    var endoStarted = f.o_prev_rcf||f.o_prev_initiated;   // pulp already removed / being removed
+    var endoLabel   = f.o_prev_rcf ? "A root-filled tooth" : "A tooth with treatment already started";
+    if(endoStarted && vital){
+      out.push({title:"Pulp already treated, but a vital response \u2014 verify the tooth",
+        advice:endoLabel+" should not respond to sensibility testing, because the pulp has been removed. A vital reading suggests the wrong tooth was tested, or an untreated / missed canal. Confirm the tooth and review the radiograph for missed anatomy."});
+    }
+    if(endoStarted && thermal){
+      out.push({title:"Pulp already treated, but thermal symptoms reported \u2014 re-check",
+        advice:endoLabel.charAt(0).toLowerCase()+endoLabel.slice(1)+" has no vital pulp to produce cold or heat pain. Confirm the tooth tested, consider a missed / extra canal, and look to an adjacent tooth or a non-odontogenic source for the symptom."});
+    }
+    if(endoStarted && f.r_caries_pulp){
+      out.push({title:"Pulp exposure on an already-treated tooth \u2014 re-check the findings",
+        advice:"A carious exposure into the pulp doesn\u2019t fit a tooth whose canal is already opened or filled. Confirm whether this is fresh caries reaching the canal system (re-treatment / coronal leakage) rather than an exposure of vital pulp, and verify the tooth selected."});
     }
     if(f.p_none && thermal && !f.p_normal && !f.p_height && !f.p_linger){
       out.push({title:"No pulp response, but thermal symptoms reported \u2014 re-test",
@@ -462,6 +472,7 @@
     var pains=["s_cold_quick","s_lingering","s_spontaneous","s_severe","s_bite","s_heat_cold"];
     var nResp=["p_normal","p_height","p_linger","p_none"].filter(function(k){return f[k];}).length;
     if(f.s_async && pains.some(function(k){return f[k];})) out.push("\u201cNo pain / asymptomatic\u201d is selected together with a pain symptom.");
+    if(f.s_async && (f.p_linger||f.pp_perc||f.pp_palp)) out.push("\u201cNo pain / asymptomatic\u201d is selected, but a sign that implies symptoms (lingering response or tenderness) is also present.");
     if(f.s_cold_quick && f.s_lingering) out.push("Thermal pain is marked as both resolving in seconds and lingering.");
     if(f.s_cold_quick && f.s_heat_cold) out.push("Cold is recorded as both provoking pain and relieving it.");
     if(nResp>1) out.push("More than one pulp-test result is selected \u2014 the sensibility test gives a single response.");
