@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Endodontic Diagnosis Mapper · Dr. Ahmed Howaidi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0D2624;
+    --teal:#13716C;
+    --teal-deep:#0F5450;
+    --teal-soft:#DCEAE7;
+    --paper:#E9EEEC;
+    --card:#FFFFFF;
+    --amber:#B5790C;
+    --amber-soft:#F4E7C9;
+    --crimson:#A23426;
+    --line:#C7D5D1;
+    --muted:#5A716D;
+    --shadow:0 1px 2px rgba(13,38,36,.06),0 8px 24px rgba(13,38,36,.06);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--teal-deep)}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+
+  /* Header */
+  header{padding:30px 0 22px}
+  @media(min-width:880px){header{padding:44px 0 26px}}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--teal-deep);margin:0 0 14px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--teal)}
+  h1{
+    font-family:"Newsreader",serif;font-weight:500;font-size:clamp(30px,5vw,46px);
+    line-height:1.05;letter-spacing:-.01em;margin:0 0 14px;
+  }
+  h1 em{font-style:italic;color:var(--teal-deep)}
+  .lede{font-size:16px;color:var(--muted);max-width:60ch;margin:0}
+  .disclaimer{
+    margin-top:20px;font-size:12.5px;color:var(--muted);
+    border-left:2px solid var(--amber);padding:6px 0 6px 14px;max-width:72ch;
+  }
+
+  /* Layout */
+  .grid{display:grid;grid-template-columns:1fr;gap:24px;align-items:start;padding-bottom:56px}
+  @media(min-width:880px){.grid{grid-template-columns:1.05fr .95fr;gap:30px;padding-bottom:64px}}
+
+  /* Findings */
+  .panel-title{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 16px;
+    display:flex;justify-content:space-between;align-items:baseline;
+  }
+  fieldset{border:0;margin:0 0 22px;padding:0}
+  legend{
+    font-family:"Newsreader",serif;font-size:19px;font-weight:500;
+    padding:0;margin:0 0 12px;display:flex;align-items:center;gap:10px;width:100%;
+  }
+  legend .n{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;
+    color:var(--teal-deep);background:var(--teal-soft);border-radius:4px;
+    padding:2px 7px;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{position:relative}
+  .chip input{position:absolute;opacity:0;width:1px;height:1px}
+  .chip label{
+    display:inline-block;cursor:pointer;font-size:13.5px;color:var(--ink);
+    background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:10px 15px;transition:background .12s,border-color .12s,color .12s;
+    user-select:none;
+  }
+  .chip label:hover{border-color:var(--teal)}
+  .chip input:checked + label{
+    background:var(--teal);border-color:var(--teal);color:#fff;font-weight:500;
+  }
+  .chip input:focus-visible + label{outline:2px solid var(--amber);outline-offset:2px}
+  /* red-flag chips */
+  .chip.flag input:checked + label{background:var(--crimson);border-color:var(--crimson)}
+
+  .reset{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;background:none;border:1px solid var(--line);
+    color:var(--muted);border-radius:6px;padding:6px 11px;cursor:pointer;
+  }
+  .reset:hover{border-color:var(--teal);color:var(--teal-deep)}
+
+  /* Readout — the signature panel */
+  .readout{position:static}
+  @media(min-width:880px){.readout{position:sticky;top:20px}}
+  .instrument{
+    background:var(--card);border-radius:14px;box-shadow:var(--shadow);
+    border:1px solid var(--line);overflow:hidden;
+  }
+  /* Mobile-first: each row stacks vertically — vertical scroll only, never horizontal */
+  .inst-head{display:none}
+  .era-sub{display:block;font-size:9.5px;letter-spacing:.06em;color:var(--muted);margin-top:3px;text-transform:none}
+
+  .inst-row{border-bottom:1px solid var(--line)}
+  .inst-row:last-child{border-bottom:0}
+  .axis{
+    padding:11px 16px;font-family:"IBM Plex Mono",monospace;font-size:11px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--teal-deep);
+    background:#fbfcfc;border-bottom:1px solid var(--line);
+  }
+  .cell{padding:14px 16px;min-height:0;border-top:1px solid var(--line)}
+  .cell:first-of-type{border-top:0}
+  .cell::before{
+    display:block;font-family:"IBM Plex Mono",monospace;font-size:9.5px;
+    letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;
+  }
+  .cell.old::before{content:"Classic \00b7 AAE 2009/2012";color:var(--amber)}
+  .cell.new::before{content:"Modern \00b7 AAE\2013ESE 2025";color:var(--teal-deep)}
+
+  @media(min-width:600px){
+    .inst-head{display:grid;grid-template-columns:84px 1fr 1fr;border-bottom:1px solid var(--line);background:#fbfcfc}
+    .inst-head>div{padding:14px 16px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+    .inst-head .era-old{color:var(--amber);border-left:1px solid var(--line)}
+    .inst-head .era-new{color:var(--teal-deep);border-left:1px solid var(--line)}
+    .inst-row{display:grid;grid-template-columns:84px 1fr 1fr}
+    .axis{display:flex;align-items:center;padding:18px 16px;color:var(--ink);border-bottom:0}
+    .cell{padding:18px 16px;min-height:78px;border-top:0;border-left:1px solid var(--line)}
+    .cell:first-of-type{border-top:0}
+    .cell::before{display:none}
+  }
+  .cell .dx{font-family:"Newsreader",serif;font-size:17px;line-height:1.15;font-weight:500}
+  .cell.old .dx{color:var(--amber)}
+  .cell.new .dx{color:var(--teal-deep)}
+  .cell .desc{font-size:12px;color:var(--muted);margin-top:6px}
+  .cell .star{color:var(--crimson);font-weight:700}
+  .placeholder{color:var(--muted);font-style:italic;font-family:"Newsreader",serif;font-size:15px}
+
+  .drivers{padding:16px 18px;border-top:1px solid var(--line);background:#fbfcfc}
+  .drivers h3{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 10px;
+  }
+  .tagrow{display:flex;flex-wrap:wrap;gap:6px}
+  .tag{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--teal-deep);
+    background:var(--teal-soft);border-radius:5px;padding:4px 9px;
+  }
+  .note{
+    margin-top:12px;font-size:12px;color:var(--crimson);
+    border-left:2px solid var(--crimson);padding-left:10px;
+  }
+  .footer-note{margin-top:16px;font-size:11.5px;color:var(--muted);line-height:1.55}
+  .footer-note code{font-family:"IBM Plex Mono",monospace;font-size:11px}
+
+  #alerts{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+  #alerts:empty{display:none}
+
+  .actions{margin-top:8px}
+  .diagnose-btn{
+    width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+    background:var(--teal);color:#fff;border:0;border-radius:12px;
+    font-family:"IBM Plex Sans",sans-serif;font-size:15px;font-weight:600;
+    padding:15px 20px;cursor:pointer;box-shadow:var(--shadow);
+    transition:background .12s,transform .06s;
+  }
+  .diagnose-btn:hover{background:var(--teal-deep)}
+  .diagnose-btn:active{transform:translateY(1px)}
+  .diagnose-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+  .diagnose-btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  #staleNote:empty{display:none}
+  .stale-msg{
+    background:var(--amber-soft);border:1px solid var(--amber);color:#5c3d05;
+    border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px;line-height:1.5;
+  }
+  .stale-msg strong{color:var(--amber)}
+  .readout.is-stale .instrument,.readout.is-stale #alerts{opacity:.45;transition:opacity .15s}
+  .warn,.nonodonto{border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.5}
+  .warn{background:var(--amber-soft);border:1px solid var(--amber);color:#5c3d05}
+  .warn strong{color:var(--amber);display:block;margin-bottom:4px}
+  .warn ul{margin:4px 0 6px;padding-left:18px}
+  .warn li{margin:2px 0}
+  .nonodonto{background:var(--teal-soft);border:1px solid var(--teal);color:var(--ink)}
+  .nonodonto strong{color:var(--teal-deep)}
+
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Clinical reference · Endodontics</p>
+    <h1>Endodontic <em>Diagnosis</em> Mapper</h1>
+    <p class="lede">Check the signs and symptoms you've established. The panel returns a paired pulpal and apical diagnosis in both the classic AAE terminology and the proposed AAE&ndash;ESE 2025 system.</p>
+    <p class="disclaimer">Decision support only — it does not replace clinical judgement, pulp testing, or radiographic interpretation. The 2025 terminology is a joint AAE&ndash;ESE proposal still in stakeholder review; wording may change before final adoption.</p>
+  </header>
+
+  <div class="grid">
+    <!-- FINDINGS -->
+    <section aria-label="Signs and symptoms">
+      <div class="panel-title"><span>Findings</span><button class="reset" id="reset">Clear all</button></div>
+
+      <fieldset>
+        <legend><span class="n">01</span> Symptoms reported</legend>
+        <div class="chips">
+          <span class="chip"><input type="checkbox" id="s_async"><label for="s_async">No pain / asymptomatic</label></span>
+          <span class="chip"><input type="checkbox" id="s_cold_quick"><label for="s_cold_quick">Sharp pain to cold or sweet, gone in seconds</label></span>
+          <span class="chip"><input type="checkbox" id="s_lingering"><label for="s_lingering">Pain lingers after thermal stimulus (&gt;10s)</label></span>
+          <span class="chip"><input type="checkbox" id="s_spontaneous"><label for="s_spontaneous">Spontaneous / unprovoked pain</label></span>
+          <span class="chip"><input type="checkbox" id="s_severe"><label for="s_severe">Severe — disturbs sleep / needs analgesics</label></span>
+          <span class="chip"><input type="checkbox" id="s_bite"><label for="s_bite">Pain on biting or chewing</label></span>
+          <span class="chip"><input type="checkbox" id="s_heat_cold"><label for="s_heat_cold">Heat pain relieved by cold</label></span>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="n">02</span> Pulp sensibility test</legend>
+        <div class="chips">
+          <span class="chip"><input type="checkbox" id="p_normal"><label for="p_normal">Normal response (matches control)</label></span>
+          <span class="chip"><input type="checkbox" id="p_height"><label for="p_height">Heightened, not lingering</label></span>
+          <span class="chip"><input type="checkbox" id="p_linger"><label for="p_linger">Prolonged / lingering response</label></span>
+          <span class="chip"><input type="checkbox" id="p_none"><label for="p_none">No response (non-responsive)</label></span>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="n">03</span> Percussion &amp; palpation</legend>
+        <div class="chips">
+          <span class="chip"><input type="checkbox" id="pp_normal"><label for="pp_normal">Not tender</label></span>
+          <span class="chip"><input type="checkbox" id="pp_perc"><label for="pp_perc">Tender to percussion</label></span>
+          <span class="chip"><input type="checkbox" id="pp_palp"><label for="pp_palp">Tender to palpation</label></span>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="n">04</span> Radiograph / imaging</legend>
+        <div class="chips">
+          <span class="chip"><input type="checkbox" id="r_normal"><label for="r_normal">Normal lamina dura &amp; PDL</label></span>
+          <span class="chip"><input type="checkbox" id="r_widen"><label for="r_widen">Widened PDL / lamina dura loss</label></span>
+          <span class="chip"><input type="checkbox" id="r_rl"><label for="r_rl">Periapical radiolucency</label></span>
+          <span class="chip"><input type="checkbox" id="r_ro"><label for="r_ro">Periapical radiopacity (sclerotic bone)</label></span>
+          <span class="chip"><input type="checkbox" id="r_caries_close"><label for="r_caries_close">Caries / restoration close to pulp</label></span>
+          <span class="chip"><input type="checkbox" id="r_caries_pulp"><label for="r_caries_pulp">Caries / restoration into pulp (exposure)</label></span>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="n">05</span> Other findings</legend>
+        <div class="chips">
+          <span class="chip"><input type="checkbox" id="o_dentine"><label for="o_dentine">Exposed dentine / recession (non-carious)</label></span>
+          <span class="chip"><input type="checkbox" id="o_rapid"><label for="o_rapid">Rapid onset</label></span>
+          <span class="chip flag"><input type="checkbox" id="o_sinus"><label for="o_sinus">Sinus tract / draining stoma</label></span>
+          <span class="chip flag"><input type="checkbox" id="o_swell_local"><label for="o_swell_local">Localized intraoral swelling</label></span>
+          <span class="chip flag"><input type="checkbox" id="o_swell_systemic"><label for="o_swell_systemic">Facial swelling + systemic signs</label></span>
+          <span class="chip"><input type="checkbox" id="o_prev_initiated"><label for="o_prev_initiated">RCT started, not obturated</label></span>
+          <span class="chip"><input type="checkbox" id="o_prev_rcf"><label for="o_prev_rcf">Existing root canal filling</label></span>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button class="diagnose-btn" id="diagnose" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+          Diagnose now
+        </button>
+      </div>
+    </section>
+
+    <!-- READOUT -->
+    <section class="readout" aria-live="polite" aria-label="Diagnosis">
+      <div id="staleNote"></div>
+      <div class="instrument">
+        <div class="inst-head">
+          <div></div>
+          <div class="era-old">Classic<span class="era-sub">AAE 2009 / 2012</span></div>
+          <div class="era-new">Modern<span class="era-sub">AAE&ndash;ESE 2025</span></div>
+        </div>
+        <div class="inst-row">
+          <div class="axis">Pulpal</div>
+          <div class="cell old" id="pulp_old"><span class="placeholder">&mdash;</span></div>
+          <div class="cell new" id="pulp_new"><span class="placeholder">&mdash;</span></div>
+        </div>
+        <div class="inst-row">
+          <div class="axis">Apical</div>
+          <div class="cell old" id="ap_old"><span class="placeholder">&mdash;</span></div>
+          <div class="cell new" id="ap_new"><span class="placeholder">&mdash;</span></div>
+        </div>
+        <div class="drivers">
+          <h3>Findings driving this result</h3>
+          <div class="tagrow" id="drivers"><span class="placeholder" style="font-size:12.5px">Select findings to generate a diagnosis.</span></div>
+          <div id="notes"></div>
+        </div>
+      </div>
+      <div id="alerts"></div>
+      <p class="footer-note">
+        Pulpal and apical diagnoses are reported together, as both systems intend. Source tables: AAE&ndash;ESE <em>Pulpal &amp; Pulp Space</em> and <em>Periapical</em> diagnostic tables (Jul 2025). Definitions here are paraphrased; the official tables are &copy; AAE &amp; ESE and reproduced only on <a href="https://www.aae.org/specialty/diagnostic-terminology-stakeholder-input/" target="_blank" rel="noopener">aae.org</a>.
+      </p>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ids=["s_async","s_cold_quick","s_lingering","s_spontaneous","s_severe","s_bite","s_heat_cold",
+    "p_normal","p_height","p_linger","p_none","pp_normal","pp_perc","pp_palp",
+    "r_normal","r_widen","r_rl","r_ro","r_caries_close","r_caries_pulp",
+    "o_dentine","o_rapid","o_sinus","o_swell_local","o_swell_systemic","o_prev_initiated","o_prev_rcf"];
+
+  // Short, original-wording descriptors (not the copyrighted table text)
+  var DESC={
+    "Normal pulp":"Symptom-free, responds normally to testing.",
+    "Reversible pulpitis":"Inflammation expected to settle once the irritant is removed.",
+    "Symptomatic irreversible pulpitis":"Vital but inflamed beyond recovery; lingering / spontaneous pain.",
+    "Asymptomatic irreversible pulpitis":"Vital, irreversibly inflamed, but no symptoms (often deep caries).",
+    "Pulp necrosis":"Loss of pulp vitality; intervention indicated.",
+    "Previously treated":"Canal already obturated in at least one canal.",
+    "Previously initiated therapy":"Treatment started, not yet completed.",
+    "Clinically normal pulp":"No pulp-attributable symptoms; normal testing.",
+    "Hypersensitive pulp":"Healthy pulp over-reacting to exposed dentine; no caries.",
+    "Mild pulpitis":"Mildly inflamed, not infected; restoration or VPT.",
+    "Severe pulpitis":"Progressive coronal inflammation; pulpotomy or RCT.",
+    "Inconclusive pulp status":"Non-responsive but uncertain; monitor for necrosis.",
+    "Previously obturated root canal":"Root filling present in at least one canal.",
+    "Previously initiated root canal treatment":"Canal opened / dressed, no obturation.",
+    "Normal apical tissues":"No tenderness; intact lamina dura and PDL.",
+    "Symptomatic apical periodontitis":"Painful apical inflammation of pulpal origin.",
+    "Asymptomatic apical periodontitis":"Apical radiolucency without symptoms.",
+    "Acute apical abscess":"Rapid pus collection with swelling.",
+    "Chronic apical abscess":"Low-grade infection draining through a sinus tract.",
+    "Condensing osteitis":"Reactive sclerosis of bone around the apex.",
+    "Clinically normal apical tissues":"Healthy, asymptomatic apex.",
+    "Apical hypersensitivity":"Tender apex from a non-pulpal cause (occlusion, trauma, perio).",
+    "Localized symptomatic apical periodontitis":"Symptomatic apical inflammation, pulpal origin.",
+    "Localized asymptomatic apical periodontitis":"Radiolucency present, no symptoms.",
+    "Localized apical periodontitis with sinus tract":"Drains via a sinus tract / stoma.",
+    "Apical periodontitis with systemic involvement":"Spreading infection with systemic signs.",
+    "No direct 2025 equivalent":"Reported descriptively in the 2025 system."
+  };
+
+  function descify(name){
+    var key=name.replace(/\*/g,"").trim();
+    // strip parenthetical qualifiers for lookup
+    var base=key.replace(/\s*\(.*?\)\s*/,"").trim();
+    return DESC[key]||DESC[base]||"";
+  }
+
+  function pulpal(f){
+    if(f.o_prev_rcf) return {old:"Previously treated",neo:"Previously obturated root canal",d:["Existing root canal filling"]};
+    if(f.o_prev_initiated) return {old:"Previously initiated therapy",neo:"Previously initiated root canal treatment",d:["RCT started, not obturated"]};
+    if(f.p_none){
+      var apicalSign=f.r_rl||f.pp_perc||f.pp_palp||f.o_sinus||f.o_swell_local||f.o_swell_systemic;
+      if(apicalSign) return {old:"Pulp necrosis",neo:"Pulp necrosis",d:["No response to pulp testing","Apical signs of disease"]};
+      return {old:"Pulp necrosis (non-responsive)",neo:"Inconclusive pulp status",d:["No response to pulp testing","No apical change — status uncertain"],
+        note:"Classic terminology calls a non-responsive pulp necrotic; the 2025 system adds an explicit \u201cinconclusive\u201d category for uncertain cases."};
+    }
+    var severe=f.s_lingering||f.s_spontaneous||f.s_severe||f.s_heat_cold||f.p_linger;
+    if(severe) return {old:"Symptomatic irreversible pulpitis",neo:"Severe pulpitis",
+      d:driverList(f,["s_lingering","s_spontaneous","s_severe","s_heat_cold","p_linger"])};
+    if(f.r_caries_pulp && (f.s_async||f.p_normal||f.p_height))
+      return {old:"Asymptomatic irreversible pulpitis",neo:"Severe pulpitis",d:["Caries into pulp","Vital, minimal symptoms"]};
+    var reversible=f.s_cold_quick||f.p_height||f.r_caries_close;
+    if(reversible){
+      if(f.o_dentine && !f.r_caries_close && !f.r_caries_pulp)
+        return {old:"Reversible pulpitis (dentine hypersensitivity)",neo:"Hypersensitive pulp",d:["Provoked, non-lingering","Exposed dentine, no caries"]};
+      return {old:"Reversible pulpitis",neo:"Mild pulpitis",d:driverList(f,["s_cold_quick","p_height","r_caries_close"])};
+    }
+    if(f.o_dentine) return {old:"Reversible pulpitis (dentine hypersensitivity)",neo:"Hypersensitive pulp",d:["Exposed dentine / recession"]};
+    if(f.p_normal||f.s_async) return {old:"Normal pulp",neo:"Clinically normal pulp",d:driverList(f,["p_normal","s_async"])};
+    return null;
+  }
+
+  function apical(f){
+    if(f.o_swell_systemic) return {old:"Acute apical abscess",neo:"Apical periodontitis with systemic involvement",
+      d:["Facial swelling + systemic signs"]};
+    if(f.o_swell_local) return {old:"Acute apical abscess",neo:"Localized symptomatic apical periodontitis",
+      d:driverList(f,["o_swell_local","o_rapid","pp_perc"])};
+    if(f.o_sinus) return {old:"Chronic apical abscess",neo:"Localized apical periodontitis with sinus tract",d:["Sinus tract / draining stoma"]};
+    var tender=f.pp_perc||f.pp_palp||f.s_bite;
+    var vital=f.p_normal||f.p_height||f.o_dentine;
+    if(tender && (f.r_rl||f.p_none||f.p_linger||f.r_widen))
+      return {old:"Symptomatic apical periodontitis",neo:"Localized symptomatic apical periodontitis",
+        d:driverList(f,["pp_perc","pp_palp","s_bite","r_rl","r_widen"])};
+    if(tender && vital && !f.r_rl)
+      return {old:"Symptomatic apical periodontitis*",neo:"Apical hypersensitivity",
+        d:["Tender, but pulp vital & no radiolucency"],
+        note:"\u002A The 2025 system introduces apical hypersensitivity for tenderness that is NOT of pulpal origin — the classic system has no equivalent term."};
+    if(f.r_rl && !tender) return {old:"Asymptomatic apical periodontitis",neo:"Localized asymptomatic apical periodontitis",d:["Radiolucency, no tenderness"]};
+    if(f.r_ro) return {old:"Condensing osteitis",neo:"No direct 2025 equivalent",d:["Periapical radiopacity / sclerotic bone"],
+      note:"Reactive sclerosis is described, not separately named, in the 2025 tables."};
+    if((f.r_normal||f.pp_normal) && !f.r_rl) return {old:"Normal apical tissues",neo:"Clinically normal apical tissues",d:driverList(f,["r_normal","pp_normal"])};
+    return null;
+  }
+
+  var LABELS={s_async:"Asymptomatic",s_cold_quick:"Cold/sweet, brief",s_lingering:"Lingering pain",
+    s_spontaneous:"Spontaneous pain",s_severe:"Severe pain",s_bite:"Bite pain",s_heat_cold:"Heat\u2192cold relief",
+    p_normal:"Normal response",p_height:"Heightened response",p_linger:"Lingering response",p_none:"No response",
+    pp_normal:"Not tender",pp_perc:"Percussion +",pp_palp:"Palpation +",
+    r_normal:"Normal periapex",r_widen:"Widened PDL",r_rl:"Radiolucency",r_ro:"Radiopacity",
+    r_caries_close:"Caries near pulp",r_caries_pulp:"Pulp exposure",
+    o_dentine:"Exposed dentine",o_rapid:"Rapid onset",o_sinus:"Sinus tract",
+    o_swell_local:"Local swelling",o_swell_systemic:"Systemic signs",
+    o_prev_initiated:"RCT initiated",o_prev_rcf:"Root filling"};
+
+  function driverList(f,keys){return keys.filter(function(k){return f[k]}).map(function(k){return LABELS[k]});}
+
+  function renderCell(el,name){
+    if(!name){el.innerHTML='<span class="placeholder">&mdash;</span>';return;}
+    var d=descify(name);
+    el.innerHTML='<div class="dx">'+name.replace(/\*/g,'<span class="star">*</span>')+'</div>'+(d?'<div class="desc">'+d+'</div>':'');
+  }
+
+  function clinicalChecks(f){
+    var out=[];
+    var vital   = f.p_normal||f.p_height||f.p_linger;   // any vital response
+    var vitalNL = f.p_normal||f.p_height;               // clearly vital, not irreversibly progressing
+    var thermal = f.s_cold_quick||f.s_lingering||f.s_heat_cold;
+
+    if(f.o_sinus && vital){
+      out.push({title:"Sinus tract with a vital pulp \u2014 cross-check the source",
+        advice:"A draining sinus tract points to a non-vital tooth, yet the pulp tested vital here. The tract is most likely draining from a different tooth. Trace it with a gutta-percha point and a radiograph to locate the true source, and re-test the adjacent teeth for the non-vital one."});
+    }
+    if((f.o_swell_local||f.o_swell_systemic) && vital){
+      out.push({title:"Swelling with a vital pulp \u2014 reconsider the origin",
+        advice:"An apical abscess requires a necrotic pulp, but this tooth tested vital. Consider a non-endodontic source \u2014 such as a periodontal abscess \u2014 and re-test the adjacent teeth to confirm the true cause before treatment."});
+    }
+    if(f.r_rl && vitalNL){
+      out.push({title:"Periapical radiolucency with a vital pulp \u2014 confirm the source",
+        advice:"An apical radiolucency of endodontic origin needs a non-vital pulp. With a vital response, suspect a non-endodontic lesion or one arising from an adjacent tooth. Re-test the neighbouring teeth, review the radiograph and consider further imaging or referral \u2014 do not start root canal treatment on a vital tooth on the radiolucency alone."});
+    }
+    if(f.o_prev_rcf && vital){
+      out.push({title:"Root-filled tooth with a vital response \u2014 verify the tooth",
+        advice:"A properly root-filled tooth should not respond to sensibility testing. A vital reading suggests the wrong tooth was tested, or an untreated / missed canal. Confirm the tooth and review the radiograph for missed anatomy."});
+    }
+    if(f.p_none && thermal && !f.p_normal && !f.p_height && !f.p_linger){
+      out.push({title:"No pulp response, but thermal symptoms reported \u2014 re-test",
+        advice:"Thermal pain needs a vital pulp, so a \u2018no response\u2019 may be a false negative \u2014 think calcified / sclerosed canals, a multi-rooted tooth with one vital canal, or a recently traumatised or immature tooth. Repeat with a different test (cold vs. electric) and confirm whether the symptoms are current or historical."});
+    }
+    if((f.s_lingering||f.s_heat_cold) && f.p_normal && !f.p_none){
+      out.push({title:"Irreversible-type symptoms, but a normal pulp response \u2014 extend testing",
+        advice:"Lingering thermal pain and heat pain relieved by cold are hallmarks of irreversible pulpitis, so a \u2018normal\u2019 reading conflicts. Repeat and extend pulp testing (several surfaces, add a heat test) \u2014 the normal response may be falsely reassuring."});
+    }
+    if(f.s_bite && f.p_normal && f.r_normal &&
+       !f.r_caries_close && !f.r_caries_pulp && !f.r_rl && !f.r_widen && !f.r_ro &&
+       !f.o_sinus && !f.o_swell_local && !f.o_swell_systemic){
+      out.push({title:"Bite pain with otherwise normal findings \u2014 look for a crack",
+        advice:"Pain on biting with a normal pulp and periapex and no caries suggests cracked tooth syndrome or occlusal trauma. Do a cusp-by-cusp bite test (Tooth Slooth), transillumination and staining, and check for a high restoration."});
+    }
+    if(f.r_caries_pulp && f.p_normal && f.s_async && !f.p_none){
+      out.push({title:"Carious exposure with a symptom-free, vital pulp",
+        advice:"A frank exposure usually inflames the pulp. If it genuinely tests vital and is symptom-free, vital pulp therapy (direct pulp cap / pulpotomy) may be viable \u2014 assess bleeding and haemostasis at the exposure to judge true pulp status."});
+    }
+    return out;
+  }
+
+  function contradictions(f){
+    var out=[];
+    var pains=["s_cold_quick","s_lingering","s_spontaneous","s_severe","s_bite","s_heat_cold"];
+    var nResp=["p_normal","p_height","p_linger","p_none"].filter(function(k){return f[k];}).length;
+    if(f.s_async && pains.some(function(k){return f[k];})) out.push("\u201cNo pain / asymptomatic\u201d is selected together with a pain symptom.");
+    if(f.s_cold_quick && f.s_lingering) out.push("Thermal pain is marked as both resolving in seconds and lingering.");
+    if(f.s_cold_quick && f.s_heat_cold) out.push("Cold is recorded as both provoking pain and relieving it.");
+    if(nResp>1) out.push("More than one pulp-test result is selected \u2014 the sensibility test gives a single response.");
+    if(f.pp_normal && (f.pp_perc||f.pp_palp)) out.push("Marked not tender, but also tender to percussion / palpation.");
+    if(f.r_normal && (f.r_rl||f.r_widen||f.r_ro)) out.push("Radiograph marked normal, but a periapical change is also selected.");
+    if(f.r_caries_close && f.r_caries_pulp) out.push("Caries depth marked both \u2018close to\u2019 and \u2018into\u2019 the pulp \u2014 use the deeper finding.");
+    if(f.o_prev_rcf && f.o_prev_initiated) out.push("Marked both fully root-filled and treatment-only-initiated.");
+    return out;
+  }
+
+  function nonOdontogenic(f){
+    var bigPain = f.s_spontaneous||f.s_severe;
+    var testedNormal =
+      f.p_normal && f.r_normal &&
+      !f.p_none && !f.p_linger && !f.p_height &&
+      !f.pp_perc && !f.pp_palp &&
+      !f.r_rl && !f.r_widen && !f.r_ro &&
+      !f.r_caries_close && !f.r_caries_pulp &&
+      !f.o_sinus && !f.o_swell_local && !f.o_swell_systemic &&
+      !f.o_prev_rcf && !f.o_prev_initiated;
+    return bigPain && testedNormal;
+  }
+
+  function compute(){
+    var f={};ids.forEach(function(id){f[id]=document.getElementById(id).checked;});
+    var any=ids.some(function(id){return f[id]});
+    var pp=pulpal(f), ap=apical(f);
+
+    renderCell(document.getElementById("pulp_old"),pp&&pp.old);
+    renderCell(document.getElementById("pulp_new"),pp&&pp.neo);
+    renderCell(document.getElementById("ap_old"),ap&&ap.old);
+    renderCell(document.getElementById("ap_new"),ap&&ap.neo);
+
+    var drivers=[];if(pp&&pp.d)drivers=drivers.concat(pp.d);if(ap&&ap.d)drivers=drivers.concat(ap.d);
+    drivers=drivers.filter(function(v,i,a){return v&&a.indexOf(v)===i;});
+    var dEl=document.getElementById("drivers");
+    if(!any){dEl.innerHTML='<span class="placeholder" style="font-size:12.5px">Select findings to generate a diagnosis.</span>';}
+    else if(!drivers.length){dEl.innerHTML='<span class="placeholder" style="font-size:12.5px">Add a pulp test result and a radiographic finding to refine.</span>';}
+    else{dEl.innerHTML=drivers.map(function(t){return '<span class="tag">'+t+'</span>';}).join("");}
+
+    var notes=[];if(pp&&pp.note)notes.push(pp.note);if(ap&&ap.note)notes.push(ap.note);
+    document.getElementById("notes").innerHTML=notes.map(function(n){return '<div class="note">'+n+'</div>';}).join("");
+
+    var aHtml="";
+    clinicalChecks(f).forEach(function(c){
+      aHtml+='<div class="warn"><strong>'+c.title+'</strong>'+c.advice+'</div>';
+    });
+    var conflicts=contradictions(f);
+    if(conflicts.length){
+      aHtml+='<div class="warn"><strong>Conflicting findings &mdash; possible testing error</strong>'+
+        '<ul>'+conflicts.map(function(c){return '<li>'+c+'</li>';}).join('')+'</ul>'+
+        'Re-check the affected test before relying on the diagnosis above.</div>';
+    }
+    if(nonOdontogenic(f)){
+      aHtml+='<div class="nonodonto"><strong>Findings within normal limits, but pain reported.</strong> '+
+        'Pulpal and periapical disease is unlikely on these results, so endodontic treatment is not indicated on the findings alone. '+
+        'Consider non-odontogenic sources of pain &mdash; trigeminal neuralgia, TMD / myofascial pain, maxillary sinusitis, '+
+        'atypical odontalgia / persistent dentoalveolar pain, or referred cardiac pain. Referral or further assessment is advised.</div>';
+    }
+    document.getElementById("alerts").innerHTML=aHtml;
+  }
+
+  var shown=false;
+  var readout=document.querySelector(".readout");
+
+  function markStale(){
+    if(!shown) return;
+    readout.classList.add("is-stale");
+    document.getElementById("staleNote").innerHTML='<div class="stale-msg">Findings changed &mdash; press <strong>Diagnose now</strong> to update the result.</div>';
+  }
+  function clearStale(){
+    readout.classList.remove("is-stale");
+    document.getElementById("staleNote").innerHTML="";
+  }
+  function clearResult(){
+    shown=false; clearStale();
+    ["pulp_old","pulp_new","ap_old","ap_new"].forEach(function(id){
+      document.getElementById(id).innerHTML='<span class="placeholder">&mdash;</span>';
+    });
+    document.getElementById("drivers").innerHTML='<span class="placeholder" style="font-size:12.5px">Select findings, then press \u201cDiagnose now\u201d.</span>';
+    document.getElementById("notes").innerHTML="";
+    document.getElementById("alerts").innerHTML="";
+  }
+
+  ids.forEach(function(id){document.getElementById(id).addEventListener("change",markStale);});
+  document.getElementById("diagnose").addEventListener("click",function(){shown=true;clearStale();compute();});
+  document.getElementById("reset").addEventListener("click",function(){
+    ids.forEach(function(id){document.getElementById(id).checked=false;});clearResult();
+  });
+  clearResult();
+})();
+</script>
+</body>
+</html>
