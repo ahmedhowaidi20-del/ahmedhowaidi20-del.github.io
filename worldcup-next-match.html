@@ -15,7 +15,28 @@
     background:linear-gradient(160deg,var(--bg),#000814);
     color:var(--text);min-height:100vh;display:flex;flex-direction:column;
     align-items:center;justify-content:center;padding:20px;
+    position:relative;overflow-x:hidden;
   }
+  /* Background watermark name */
+  .watermark{
+    position:fixed;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;z-index:0;pointer-events:none;
+    overflow:hidden;
+  }
+  .watermark .wm-name{
+    font-size:18vw;font-weight:800;line-height:.95;text-align:center;
+    letter-spacing:-2px;white-space:nowrap;
+    background:linear-gradient(135deg,rgba(91,192,190,.10),rgba(255,209,102,.07));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-transform:uppercase;transform:rotate(-8deg);user-select:none;
+  }
+  .watermark .wm-tag{
+    margin-top:1vh;font-size:3vw;font-weight:600;letter-spacing:4px;
+    color:rgba(255,209,102,.10);text-transform:uppercase;
+    transform:rotate(-8deg);user-select:none;
+  }
+  /* Lift real content above watermark */
+  h1,.sub,.card,.upcoming,footer{position:relative;z-index:1;}
   h1{font-size:1.1rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;text-align:center;}
   .sub{color:var(--muted);font-size:.8rem;margin-bottom:24px;text-align:center;}
   .card{
@@ -49,6 +70,7 @@
 <body>
   <h1>FIFA World Cup 2026</h1>
   <div class="sub">Canada · Mexico · USA</div>
+  <div class="sub" style="color:var(--gold);letter-spacing:2px;margin-top:-18px;">Ahmed Howaidi</div>
 
   <div class="card" id="card">
     <div class="label" id="cardLabel">Next Match</div>
@@ -73,6 +95,7 @@
 
   <footer>
     Times shown in your local timezone (<span id="tz"></span>). Kickoffs converted from official ET schedule. Group stage fixtures.
+    <br><br><span style="color:var(--gold);letter-spacing:1px;">Built by Ahmed Howaidi — thank me later 😎</span>
   </footer>
 
 <script>
