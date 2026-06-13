@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Cup 2026 — Next Match</title>
+<style>
+  :root{
+    --bg:#0b132b; --card:#1c2541; --accent:#5bc0be; --gold:#ffd166;
+    --text:#e8eef7; --muted:#9aa7c7;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(160deg,var(--bg),#000814);
+    color:var(--text);min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;padding:20px;
+  }
+  h1{font-size:1.1rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;text-align:center;}
+  .sub{color:var(--muted);font-size:.8rem;margin-bottom:24px;text-align:center;}
+  .card{
+    background:var(--card);border-radius:18px;padding:28px 24px;width:100%;
+    max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.45);
+    border:1px solid rgba(91,192,190,.2);
+  }
+  .label{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);text-align:center;margin-bottom:14px;}
+  .teams{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px;}
+  .team{flex:1;text-align:center;}
+  .team .name{font-size:1.25rem;font-weight:700;}
+  .vs{color:var(--accent);font-weight:700;font-size:.9rem;}
+  .meta{text-align:center;color:var(--muted);font-size:.85rem;line-height:1.7;margin-bottom:18px;}
+  .meta strong{color:var(--text);}
+  .countdown{
+    display:flex;justify-content:center;gap:12px;margin:18px 0 6px;
+  }
+  .unit{background:rgba(91,192,190,.12);border-radius:10px;padding:10px 12px;min-width:62px;text-align:center;}
+  .unit .num{font-size:1.6rem;font-weight:700;color:var(--gold);}
+  .unit .u{font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+  .upcoming{margin-top:26px;width:100%;max-width:420px;}
+  .upcoming h2{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;text-align:center;}
+  .row{display:flex;justify-content:space-between;padding:9px 12px;border-radius:8px;font-size:.82rem;}
+  .row:nth-child(odd){background:rgba(255,255,255,.03);}
+  .row .m{color:var(--text);}
+  .row .t{color:var(--muted);}
+  .live{color:#ff5d73;font-weight:700;}
+  footer{margin-top:22px;color:var(--muted);font-size:.65rem;text-align:center;max-width:420px;}
+</style>
+</head>
+<body>
+  <h1>FIFA World Cup 2026</h1>
+  <div class="sub">Canada · Mexico · USA</div>
+
+  <div class="card" id="card">
+    <div class="label" id="cardLabel">Next Match</div>
+    <div class="teams">
+      <div class="team"><div class="name" id="home">—</div></div>
+      <div class="vs">VS</div>
+      <div class="team"><div class="name" id="away">—</div></div>
+    </div>
+    <div class="meta" id="meta"></div>
+    <div class="countdown" id="cd">
+      <div class="unit"><div class="num" id="d">0</div><div class="u">Days</div></div>
+      <div class="unit"><div class="num" id="h">0</div><div class="u">Hrs</div></div>
+      <div class="unit"><div class="num" id="m">0</div><div class="u">Min</div></div>
+      <div class="unit"><div class="num" id="s">0</div><div class="u">Sec</div></div>
+    </div>
+  </div>
+
+  <div class="upcoming">
+    <h2>Coming Up</h2>
+    <div id="list"></div>
+  </div>
+
+  <footer>
+    Times shown in your local timezone (<span id="tz"></span>). Kickoffs converted from official ET schedule. Group stage fixtures.
+  </footer>
+
+<script>
+// Kickoff times stored as UTC ISO strings (ET = UTC-4 during the tournament).
+const matches = [
+  {home:"Qatar",       away:"Switzerland",  group:"B", venue:"San Francisco Bay Area", utc:"2026-06-13T19:00:00Z"},
+  {home:"Brazil",      away:"Morocco",      group:"C", venue:"New York/New Jersey",     utc:"2026-06-13T22:00:00Z"},
+  {home:"Haiti",       away:"Scotland",     group:"C", venue:"Boston",                  utc:"2026-06-14T01:00:00Z"},
+  {home:"Australia",   away:"Türkiye",      group:"D", venue:"Vancouver",               utc:"2026-06-14T04:00:00Z"},
+  {home:"Germany",     away:"Curaçao",      group:"E", venue:"Houston",                 utc:"2026-06-14T17:00:00Z"},
+  {home:"Netherlands", away:"Japan",        group:"F", venue:"Dallas",                  utc:"2026-06-14T20:00:00Z"},
+  {home:"Côte d'Ivoire",away:"Ecuador",     group:"E", venue:"Philadelphia",            utc:"2026-06-14T23:00:00Z"},
+  {home:"Sweden",      away:"Tunisia",      group:"F", venue:"Monterrey",               utc:"2026-06-15T02:00:00Z"},
+  {home:"Spain",       away:"Cape Verde",   group:"H", venue:"Atlanta",                 utc:"2026-06-15T16:00:00Z"},
+  {home:"Belgium",     away:"Egypt",        group:"G", venue:"Seattle",                 utc:"2026-06-15T19:00:00Z"},
+  {home:"Saudi Arabia",away:"Uruguay",      group:"H", venue:"Guadalajara",             utc:"2026-06-15T22:00:00Z"},
+  {home:"Iran",        away:"New Zealand",  group:"G", venue:"Los Angeles",             utc:"2026-06-16T01:00:00Z"},
+  {home:"France",      away:"Senegal",      group:"I", venue:"New York/New Jersey",     utc:"2026-06-16T19:00:00Z"},
+  {home:"Iraq",        away:"Norway",       group:"I", venue:"Boston",                  utc:"2026-06-16T22:00:00Z"},
+  {home:"Argentina",   away:"Algeria",      group:"J", venue:"Kansas City",             utc:"2026-06-17T01:00:00Z"},
+];
+
+const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+document.getElementById("tz").textContent = tzName;
+
+const fmt = new Intl.DateTimeFormat(undefined,{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+const fmtShort = new Intl.DateTimeFormat(undefined,{weekday:"short",hour:"2-digit",minute:"2-digit"});
+
+function findNext(){
+  const now = Date.now();
+  // a match is "live" for ~2 hours after kickoff
+  for(const mt of matches){
+    const start = new Date(mt.utc).getTime();
+    if(now < start) return {match:mt, live:false};
+    if(now >= start && now < start + 2*60*60*1000) return {match:mt, live:true};
+  }
+  return null;
+}
+
+function render(){
+  const next = findNext();
+  if(!next){
+    document.getElementById("cardLabel").textContent = "Group Stage Complete";
+    document.getElementById("home").textContent = "—";
+    document.getElementById("away").textContent = "—";
+    document.getElementById("meta").textContent = "No upcoming fixtures in this list.";
+    document.getElementById("cd").style.display = "none";
+    return;
+  }
+  const m = next.match;
+  document.getElementById("home").textContent = m.home;
+  document.getElementById("away").textContent = m.away;
+  document.getElementById("meta").innerHTML =
+    `<strong>${fmt.format(new Date(m.utc))}</strong><br>Group ${m.group} · ${m.venue}`;
+
+  if(next.live){
+    document.getElementById("cardLabel").innerHTML = '<span class="live">● LIVE NOW</span>';
+    document.getElementById("cd").style.display = "none";
+  } else {
+    document.getElementById("cardLabel").textContent = "Next Match";
+    document.getElementById("cd").style.display = "flex";
+    const diff = new Date(m.utc).getTime() - Date.now();
+    const d = Math.floor(diff/86400000);
+    const h = Math.floor(diff%86400000/3600000);
+    const mi = Math.floor(diff%3600000/60000);
+    const s = Math.floor(diff%60000/1000);
+    document.getElementById("d").textContent = d;
+    document.getElementById("h").textContent = h;
+    document.getElementById("m").textContent = mi;
+    document.getElementById("s").textContent = s;
+  }
+
+  // upcoming list (skip the current/live one, show next 5)
+  const now = Date.now();
+  const list = matches.filter(x => new Date(x.utc).getTime() > now).slice(0,5);
+  document.getElementById("list").innerHTML = list.map(x =>
+    `<div class="row"><span class="m">${x.home} v ${x.away}</span><span class="t">${fmtShort.format(new Date(x.utc))}</span></div>`
+  ).join("") || '<div class="row"><span class="m">No more fixtures listed</span></div>';
+}
+
+render();
+setInterval(render, 1000);
+</script>
+</body>
+</html>
