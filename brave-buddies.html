@@ -787,9 +787,7 @@ function doScare(){scaring=true;haaaBubble.classList.add('show');playRoar(roarVo
 function scareWin(){if(scareRAF){cancelAnimationFrame(scareRAF);scareRAF=null;}addStar();confettiBurst();
   document.getElementById('scareReward').classList.add('show');}
 document.getElementById('scareAgain').addEventListener('click',setupScare);
-document.getElementById('haaaBtn').addEventListener('click',()=>{if(scaring)return;const c=centers();
-  if(Math.hypot(c.dx-c.bx,c.dy-c.by)<95)doScare();
-  else{haaaBubble.classList.add('show');playRoar(roarVol*0.8);setTimeout(()=>haaaBubble.classList.remove('show'),700);scareSay.textContent='Get closer to Daddy, then shout again! 👻';}});
+document.getElementById('haaaBtn').addEventListener('click',()=>{if(scaring)return;ensureAudio();doScare();});
 badrChase.addEventListener('pointerdown',e=>{e.preventDefault();ensureAudio();
   const f=scareField.getBoundingClientRect(),r=badrChase.getBoundingClientRect(),ox=e.clientX-r.left,oy=e.clientY-r.top;
   const move=ev=>{bX=ev.clientX-f.left-ox;bY=ev.clientY-f.top-oy;
