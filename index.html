@@ -420,6 +420,77 @@ body {
 .c-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; margin-bottom: 4px; }
 .c-value { font-size: 14px; font-weight: 600; color: var(--text); }
 
+/* SUGGESTION BOX */
+.suggestion-card {
+  background: #fff;
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 40px;
+  margin-bottom: 64px;
+  box-shadow: 0 4px 24px rgba(0,123,116,0.06);
+}
+.suggestion-card p {
+  font-size: 14px;
+  color: var(--text-mid);
+  line-height: 1.7;
+  margin-bottom: 22px;
+  max-width: 560px;
+}
+.suggestion-form textarea {
+  width: 100%;
+  min-height: 130px;
+  padding: 16px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--off-white);
+  resize: vertical;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.suggestion-form textarea:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-pale);
+}
+.suggestion-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 16px;
+}
+.suggestion-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
+}
+.btn-submit {
+  padding: 14px 30px;
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.btn-submit:hover { background: var(--teal-light); transform: translateY(-2px); }
+.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.suggestion-status {
+  font-size: 13px;
+  font-weight: 600;
+  display: none;
+}
+.suggestion-status.success { color: var(--teal); display: block; }
+.suggestion-status.error { color: #B3261E; display: block; }
+
 /* FOOTER */
 footer {
   background: var(--navy);
@@ -491,6 +562,7 @@ footer {
   <nav class="hero-nav">
     <a href="#about">About</a>
     <a href="#projects">Projects</a>
+    <a href="#suggest">Suggest</a>
     <a href="#contact">Contact</a>
   </nav>
 
@@ -505,7 +577,7 @@ footer {
       <a href="clinicavailability/" class="btn-teal"><span>🏥 Clinic Availability App</span></a><a href="endo-diagnosis.html" class="btn-teal"><span>🪺 Endodontic Diagnosis Mapper</span></a>
       <a href="compounding/" class="btn-teal"><span>📈 Compound Interest Calculator</span></a>
       <a href="worldcup-next-match.html" class="btn-teal btn-glow"><span>⚽ World Cup 2026 Tracker</span></a><a href="brave-buddies.html" class="btn-teal"><span>🦸 Brave Buddies</span></a>
-      <a href="#contact" class="btn-ghost"><span>✉ Get in Touch</span></a>
+      <a href="#contact" class="btn-ghost"><span>✉ Get in Touch</span></a><a href="#suggest" class="btn-ghost"><span>💬 Say Something</span></a>
     </div>
   </div>
 </section>
@@ -594,6 +666,24 @@ footer {
     </div>
   </a>
 
+  <!-- SUGGEST -->
+  <div class="sec-head" id="suggest">
+    <span class="sec-tag">Suggest</span>
+    <div class="sec-line"></div>
+  </div>
+
+  <div class="suggestion-card">
+    <p>Have an idea, a bit of feedback, or something you think could work better? Drop it below — it goes straight to Dr. Howaidi.</p>
+    <form class="suggestion-form" id="suggestionForm">
+      <textarea name="message" placeholder="Say something..." required></textarea>
+      <div class="suggestion-form-footer">
+        <span class="suggestion-hint">Sent privately — only Dr. Howaidi sees this.</span>
+        <button type="submit" class="btn-submit" id="suggestionSubmitBtn">Send</button>
+      </div>
+      <div class="suggestion-status" id="suggestionStatus"></div>
+    </form>
+  </div>
+
   <!-- CONTACT -->
   <div class="sec-head" id="contact">
     <span class="sec-tag">Contact</span>
@@ -629,4 +719,50 @@ footer {
 <footer>
   <div class="footer-brand">Dr. <span class="footer-teal">Ahmed Howaidi</span></div>
   <div class="footer-meta">Consultant Restorative Dentist<br>MOH · King Abdullah Medical City · Saudi Arabia</div>
-</footer></body></html>
+</footer>
+
+<script>
+(function() {
+  // TODO: Replace with your real Formspree endpoint, e.g. "https://formspree.io/f/abc123xy"
+  var FORMSPREE_ENDPOINT = "https://formspree.io/f/mwvdqjlw";
+
+  var form = document.getElementById('suggestionForm');
+  var btn = document.getElementById('suggestionSubmitBtn');
+  var status = document.getElementById('suggestionStatus');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    status.className = 'suggestion-status';
+    status.textContent = '';
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    var formData = new FormData(form);
+
+    fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      body: formData,
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(function(response) {
+      if (response.ok) {
+        form.reset();
+        status.className = 'suggestion-status success';
+        status.textContent = 'Thanks — your suggestion has been sent!';
+      } else {
+        status.className = 'suggestion-status error';
+        status.textContent = 'Something went wrong. Please try again.';
+      }
+    })
+    .catch(function() {
+      status.className = 'suggestion-status error';
+      status.textContent = 'Something went wrong. Please try again.';
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = 'Send';
+    });
+  });
+})();
+</script>
+</body></html>
