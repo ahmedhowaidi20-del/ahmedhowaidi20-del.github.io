@@ -64,6 +64,36 @@ border:1px solid rgba(91,192,190,.2);
 .row .t{color:var(--muted);white-space:nowrap;}
 .live{color:#ff5d73;font-weight:700;}
 footer{margin-top:22px;color:var(--muted);font-size:.65rem;text-align:center;max-width:420px;line-height:1.6;}
+
+/* SAY SOMETHING BOX */
+.saycard{
+margin-top:26px;width:100%;max-width:420px;
+background:var(--card);border-radius:18px;padding:24px 22px;
+box-shadow:0 20px 50px rgba(0,0,0,.45);
+border:1px solid rgba(91,192,190,.2);
+}
+.saycard .sc-label{font-size:.78rem;letter-spacing:.5px;text-transform:none;color:var(--gold);margin-bottom:10px;text-align:center;font-weight:700;}
+.saycard p{font-size:.78rem;color:var(--muted);line-height:1.6;margin-bottom:14px;text-align:center;}
+.saycard textarea{
+width:100%;min-height:90px;padding:12px 14px;border-radius:10px;
+border:1px solid rgba(91,192,190,.25);background:rgba(255,255,255,.04);
+color:var(--text);font-family:inherit;font-size:.85rem;resize:vertical;
+}
+.saycard textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,192,190,.15);}
+.saycard-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap;}
+.saycard .sc-hint{font-size:.65rem;color:var(--muted);}
+.saycard .sc-btn{
+background:rgba(91,192,190,.15);border:1px solid rgba(91,192,190,.4);
+color:var(--accent);font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;
+padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:700;
+font-family:inherit;transition:background .2s, transform .15s;
+}
+.saycard .sc-btn:hover{background:rgba(91,192,190,.28);transform:translateY(-1px);}
+.saycard .sc-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.saycard .sc-status{font-size:.72rem;font-weight:600;margin-top:10px;display:none;text-align:center;}
+.saycard .sc-status.success{color:var(--accent);display:block;}
+.saycard .sc-status.error{color:#ff5d73;display:block;}
+
 </style>
 </head>
 <body>
@@ -96,6 +126,19 @@ footer{margin-top:22px;color:var(--muted);font-size:.65rem;text-align:center;max
 <div class="upcoming">
 <h2>Coming Up</h2>
 <div id="list"></div>
+</div>
+
+<div class="saycard" id="saycard">
+<div class="sc-label">⚽ Messi or Ronaldo? Settle It Here</div>
+<p>"Cristy will see this</p>
+<form id="sayForm">
+<textarea name="message" placeholder="Cristiano for sure" required></textarea>
+<div class="saycard-footer">
+<span class="sc-hint">Sent privately.</span>
+<button type="submit" class="sc-btn" id="sayBtn">Send</button>
+</div>
+<div class="sc-status" id="sayStatus"></div>
+</form>
 </div>
 
 <footer>
@@ -295,6 +338,50 @@ return `<div class="row"><span class="m">${label}</span><span class="t">${fmtSho
 
 render();
 setInterval(render, 1000);
+
+// ---- SAY SOMETHING BOX ----
+(function() {
+  var FORMSPREE_ENDPOINT = "https://formspree.io/f/mwvdqjlw";
+
+  var form = document.getElementById('sayForm');
+  var btn = document.getElementById('sayBtn');
+  var status = document.getElementById('sayStatus');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    status.className = 'sc-status';
+    status.textContent = '';
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    var formData = new FormData(form);
+
+    fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      body: formData,
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(function(response) {
+      if (response.ok) {
+        form.reset();
+        status.className = 'sc-status success';
+        status.textContent = 'Thanks — your message has been sent!';
+      } else {
+        status.className = 'sc-status error';
+        status.textContent = 'Something went wrong. Please try again.';
+      }
+    })
+    .catch(function() {
+      status.className = 'sc-status error';
+      status.textContent = 'Something went wrong. Please try again.';
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = 'Send';
+    });
+  });
+})();
+
 </script>
 </body>
 </html>
