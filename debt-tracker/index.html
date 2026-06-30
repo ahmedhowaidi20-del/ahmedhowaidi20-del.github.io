@@ -389,7 +389,7 @@
       <option value="paid">↩️ I paid them back</option>
       <option value="returned">✅ They returned money</option>
     </select>
-    <input type="number" id="tx-amount" placeholder="Amount (SAR)" min="0.01" step="0.01" inputmode="decimal" />
+    <input type="text" id="tx-amount" placeholder="Amount e.g. 5000" inputmode="decimal" />
     <input type="text" id="tx-desc" placeholder="Description (e.g. iPhone case)" />
     <button class="btn-submit" onclick="addTransaction()">Add Transaction</button>
   </div>
@@ -578,7 +578,7 @@
   // ── Add transaction ──────────────────────────────────────
   function addTransaction() {
     const type = document.getElementById('tx-type').value;
-    const amountRaw = parseFloat(document.getElementById('tx-amount').value);
+    const amountRaw = parseFloat(document.getElementById('tx-amount').value.replace(/,/g, '.').replace(/[^\d.]/g, ''));
     const desc = document.getElementById('tx-desc').value.trim();
 
     if (!amountRaw || amountRaw <= 0) { toast('Enter a valid amount.'); return; }
