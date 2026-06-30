@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Debt Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --accent: #6c63ff;
+      --accent-light: #8b85ff;
+      --green: #22c55e;
+      --red: #ef4444;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --radius: 14px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .back-btn {
+      background: none;
+      border: none;
+      color: var(--accent-light);
+      font-size: 22px;
+      cursor: pointer;
+      padding: 2px 6px;
+      display: none;
+    }
+    .logo { font-size: 18px; font-weight: 700; }
+    .logo span { color: var(--accent-light); }
+    .btn-add {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ── Views ── */
+    #view-home, #view-person { padding: 0 0 100px; }
+    #view-person { display: none; }
+
+    /* ── Summary bar ── */
+    .summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 16px 20px;
+    }
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+    .summary-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+    .summary-card .amount { font-size: 20px; font-weight: 700; }
+    .summary-card.green .amount { color: var(--green); }
+    .summary-card.red .amount { color: var(--red); }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      padding: 4px 20px 10px;
+    }
+
+    /* ── People list ── */
+    .people-list { padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
+    .person-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .person-card:active { background: var(--surface2); }
+    .avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px; flex-shrink: 0;
+      color: #fff;
+    }
+    .person-info { flex: 1; min-width: 0; }
+    .person-name { font-weight: 600; font-size: 15px; }
+    .person-bal { font-size: 13px; margin-top: 3px; }
+    .bal-positive { color: var(--green); }
+    .bal-negative { color: var(--red); }
+    .bal-zero { color: var(--muted); }
+    .person-arrow { color: var(--muted); font-size: 18px; }
+
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      padding: 60px 20px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+    /* ── Person view ── */
+    .person-header {
+      padding: 20px 20px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .person-header .avatar { width: 52px; height: 52px; font-size: 20px; }
+    .person-header-info h2 { font-size: 20px; font-weight: 700; }
+    .balance-pill {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    .pill-green { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+    .pill-red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+    .pill-grey { background: rgba(107,114,128,0.12); color: var(--muted); border: 1px solid var(--border); }
+
+    /* ── Add transaction form ── */
+    .tx-form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin: 0 20px 20px;
+      padding: 16px;
+    }
+    .tx-form-card h3 {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 14px;
+    }
+    .tx-form-card select,
+    .tx-form-card input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      margin-bottom: 10px;
+      -webkit-appearance: none;
+    }
+    .tx-form-card select:focus,
+    .tx-form-card input:focus { border-color: var(--accent); }
+    .btn-submit {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 2px;
+    }
+    .btn-submit:active { opacity: 0.85; }
+
+    /* ── Transaction list ── */
+    .tx-list { padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
+    .tx-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .tx-icon {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .tx-icon.in { background: rgba(34,197,94,0.12); }
+    .tx-icon.out { background: rgba(239,68,68,0.12); }
+    .tx-details { flex: 1; min-width: 0; }
+    .tx-desc { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tx-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .tx-right { text-align: right; flex-shrink: 0; }
+    .tx-amount { font-size: 15px; font-weight: 700; }
+    .tx-amount.in { color: var(--green); }
+    .tx-amount.out { color: var(--red); }
+    .tx-del {
+      font-size: 13px;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-top: 4px;
+      display: block;
+      width: 100%;
+      text-align: right;
+    }
+
+    .empty-tx {
+      text-align: center;
+      color: var(--muted);
+      padding: 40px 20px;
+      font-size: 14px;
+    }
+
+    /* ── Delete person ── */
+    .danger-zone {
+      margin: 24px 20px 0;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .btn-danger {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--red);
+      color: var(--red);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 100;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px 20px 0 0;
+      padding: 28px 24px 40px;
+      width: 100%;
+      max-width: 480px;
+      transform: translateY(40px);
+      transition: transform 0.25s ease;
+    }
+    .modal-overlay.show .modal { transform: translateY(0); }
+    .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .modal input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 16px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    .modal input:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; gap: 10px; }
+    .btn-cancel {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 13px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-confirm {
+      flex: 2;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 13px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 22px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: transform 0.3s;
+      z-index: 200;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <button class="back-btn" id="back-btn" onclick="showHome()">‹</button>
+    <div class="logo" id="header-title">Debt <span>Tracker</span></div>
+  </div>
+  <button class="btn-add" id="header-btn" onclick="openAddPersonModal()">+ Add Person</button>
+</div>
+
+<!-- HOME VIEW -->
+<div id="view-home">
+  <div class="summary">
+    <div class="summary-card green">
+      <div class="label">Owed to me</div>
+      <div class="amount" id="total-owed-me">SAR 0</div>
+    </div>
+    <div class="summary-card red">
+      <div class="label">I owe</div>
+      <div class="amount" id="total-i-owe">SAR 0</div>
+    </div>
+  </div>
+  <div class="section-title">People</div>
+  <div class="people-list" id="people-list"></div>
+</div>
+
+<!-- PERSON VIEW -->
+<div id="view-person">
+  <div class="person-header">
+    <div class="avatar" id="p-avatar"></div>
+    <div class="person-header-info">
+      <h2 id="p-name"></h2>
+      <div class="balance-pill" id="p-badge"></div>
+    </div>
+  </div>
+
+  <div class="tx-form-card">
+    <h3>Add Transaction</h3>
+    <select id="tx-type">
+      <option value="received">💵 They sent me money</option>
+      <option value="spent">🛍️ I spent for them</option>
+      <option value="paid">↩️ I paid them back</option>
+      <option value="returned">✅ They returned money</option>
+    </select>
+    <input type="number" id="tx-amount" placeholder="Amount (SAR)" min="0.01" step="0.01" inputmode="decimal" />
+    <input type="text" id="tx-desc" placeholder="Description (e.g. iPhone case)" />
+    <button class="btn-submit" onclick="addTransaction()">Add Transaction</button>
+  </div>
+
+  <div class="section-title">History</div>
+  <div class="tx-list" id="tx-list"></div>
+
+  <div class="danger-zone">
+    <button class="btn-danger" onclick="deletePerson()">Delete this person</button>
+  </div>
+</div>
+
+<!-- Add Person Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>Add a Person</h2>
+    <input type="text" id="new-person-name" placeholder="e.g. Sami" onkeydown="if(event.key==='Enter') confirmAddPerson()" />
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" onclick="confirmAddPerson()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Storage ──────────────────────────────────────────────
+  const STORE = 'debt_tracker_v1';
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORE)) || { people: [], transactions: [] }; }
+    catch { return { people: [], transactions: [] }; }
+  }
+
+  function save(data) {
+    localStorage.setItem(STORE, JSON.stringify(data));
+  }
+
+  // ── State ────────────────────────────────────────────────
+  let data = load();
+  let currentPersonId = null;
+
+  // ── Init ─────────────────────────────────────────────────
+  renderHome();
+
+  // ── Home ─────────────────────────────────────────────────
+  function renderHome() {
+    const list = document.getElementById('people-list');
+    const people = data.people;
+
+    // Compute balances
+    let totalOwedMe = 0, totalIOwe = 0;
+    const balances = {};
+    data.transactions.forEach(t => {
+      balances[t.personId] = (balances[t.personId] || 0) + t.amount;
+    });
+    Object.values(balances).forEach(b => {
+      if (b > 0) totalOwedMe += b;
+      else totalIOwe += Math.abs(b);
+    });
+
+    document.getElementById('total-owed-me').textContent = fmt(totalOwedMe);
+    document.getElementById('total-i-owe').textContent = fmt(totalIOwe);
+
+    if (people.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="icon">🤝</div>No people yet.<br>Tap <strong>+ Add Person</strong> to start tracking.</div>`;
+      return;
+    }
+
+    list.innerHTML = people.map(p => {
+      const bal = balances[p.id] || 0;
+      const balClass = bal > 0 ? 'bal-positive' : bal < 0 ? 'bal-negative' : 'bal-zero';
+      const balText = bal > 0 ? `Owes me ${fmt(bal)}` : bal < 0 ? `I owe ${fmt(Math.abs(bal))}` : 'Settled ✓';
+      const initials = initials2(p.name);
+      return `
+        <div class="person-card" onclick="showPerson('${p.id}')">
+          <div class="avatar">${initials}</div>
+          <div class="person-info">
+            <div class="person-name">${esc(p.name)}</div>
+            <div class="person-bal ${balClass}">${balText}</div>
+          </div>
+          <div class="person-arrow">›</div>
+        </div>`;
+    }).join('');
+  }
+
+  function showHome() {
+    currentPersonId = null;
+    document.getElementById('view-home').style.display = '';
+    document.getElementById('view-person').style.display = 'none';
+    document.getElementById('back-btn').style.display = 'none';
+    document.getElementById('header-title').innerHTML = 'Debt <span style="color:var(--accent-light)">Tracker</span>';
+    document.getElementById('header-btn').textContent = '+ Add Person';
+    document.getElementById('header-btn').onclick = openAddPersonModal;
+    renderHome();
+  }
+
+  // ── Person view ──────────────────────────────────────────
+  function showPerson(id) {
+    currentPersonId = id;
+    const person = data.people.find(p => p.id === id);
+    if (!person) return;
+
+    document.getElementById('view-home').style.display = 'none';
+    document.getElementById('view-person').style.display = '';
+    document.getElementById('back-btn').style.display = 'block';
+    document.getElementById('header-title').textContent = person.name;
+    document.getElementById('header-btn').style.display = 'none';
+
+    document.getElementById('p-avatar').textContent = initials2(person.name);
+    document.getElementById('p-name').textContent = person.name;
+
+    renderPersonTransactions();
+  }
+
+  function renderPersonTransactions() {
+    const txs = data.transactions
+      .filter(t => t.personId === currentPersonId)
+      .sort((a, b) => b.createdAt - a.createdAt);
+
+    const balance = txs.reduce((s, t) => s + t.amount, 0);
+
+    // Badge
+    const badge = document.getElementById('p-badge');
+    const person = data.people.find(p => p.id === currentPersonId);
+    if (balance > 0) {
+      badge.className = 'balance-pill pill-green';
+      badge.textContent = `${person.name} owes me ${fmt(balance)}`;
+    } else if (balance < 0) {
+      badge.className = 'balance-pill pill-red';
+      badge.textContent = `I owe ${person.name} ${fmt(Math.abs(balance))}`;
+    } else {
+      badge.className = 'balance-pill pill-grey';
+      badge.textContent = 'All settled ✓';
+    }
+
+    // List
+    const list = document.getElementById('tx-list');
+    if (txs.length === 0) {
+      list.innerHTML = '<div class="empty-tx">No transactions yet.</div>';
+      return;
+    }
+
+    list.innerHTML = txs.map(t => {
+      const isIn = t.amount > 0;
+      const date = new Date(t.createdAt).toLocaleDateString('en-SA', { year: 'numeric', month: 'short', day: 'numeric' });
+      return `
+        <div class="tx-item">
+          <div class="tx-icon ${isIn ? 'in' : 'out'}">${isIn ? '📥' : '📤'}</div>
+          <div class="tx-details">
+            <div class="tx-desc">${esc(t.description)}</div>
+            <div class="tx-meta">${esc(t.typeLabel)} · ${date}</div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-amount ${isIn ? 'in' : 'out'}">${isIn ? '+' : ''}${fmt(t.amount)}</div>
+            <button class="tx-del" onclick="deleteTx('${t.id}')">delete</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Add person ───────────────────────────────────────────
+  function openAddPersonModal() {
+    document.getElementById('new-person-name').value = '';
+    document.getElementById('modal').classList.add('show');
+    setTimeout(() => document.getElementById('new-person-name').focus(), 150);
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('show');
+  }
+
+  function confirmAddPerson() {
+    const name = document.getElementById('new-person-name').value.trim();
+    if (!name) return;
+    const person = { id: uid(), name, createdAt: Date.now() };
+    data.people.push(person);
+    save(data);
+    closeModal();
+    toast('Person added!');
+    renderHome();
+  }
+
+  // ── Add transaction ──────────────────────────────────────
+  function addTransaction() {
+    const type = document.getElementById('tx-type').value;
+    const amountRaw = parseFloat(document.getElementById('tx-amount').value);
+    const desc = document.getElementById('tx-desc').value.trim();
+
+    if (!amountRaw || amountRaw <= 0) { toast('Enter a valid amount.'); return; }
+    if (!desc) { toast('Add a description.'); return; }
+
+    const typeLabels = {
+      received: 'They sent me money',
+      spent: 'I spent for them',
+      paid: 'I paid them back',
+      returned: 'They returned money',
+    };
+
+    const amountSigned = (type === 'received' || type === 'returned') ? amountRaw : -amountRaw;
+
+    data.transactions.push({
+      id: uid(),
+      personId: currentPersonId,
+      amount: amountSigned,
+      description: desc,
+      typeLabel: typeLabels[type],
+      createdAt: Date.now(),
+    });
+
+    save(data);
+    document.getElementById('tx-amount').value = '';
+    document.getElementById('tx-desc').value = '';
+    toast('Transaction added!');
+    renderPersonTransactions();
+    // update home totals in background
+    renderHomeSummaryOnly();
+  }
+
+  function renderHomeSummaryOnly() {
+    let totalOwedMe = 0, totalIOwe = 0;
+    const balances = {};
+    data.transactions.forEach(t => {
+      balances[t.personId] = (balances[t.personId] || 0) + t.amount;
+    });
+    Object.values(balances).forEach(b => {
+      if (b > 0) totalOwedMe += b;
+      else totalIOwe += Math.abs(b);
+    });
+    document.getElementById('total-owed-me').textContent = fmt(totalOwedMe);
+    document.getElementById('total-i-owe').textContent = fmt(totalIOwe);
+  }
+
+  // ── Delete ───────────────────────────────────────────────
+  function deleteTx(id) {
+    if (!confirm('Delete this transaction?')) return;
+    data.transactions = data.transactions.filter(t => t.id !== id);
+    save(data);
+    toast('Deleted.');
+    renderPersonTransactions();
+  }
+
+  function deletePerson() {
+    const person = data.people.find(p => p.id === currentPersonId);
+    if (!confirm(`Delete ${person.name} and all their transactions?`)) return;
+    data.people = data.people.filter(p => p.id !== currentPersonId);
+    data.transactions = data.transactions.filter(t => t.personId !== currentPersonId);
+    save(data);
+    toast('Person deleted.');
+    showHome();
+  }
+
+  // ── Helpers ──────────────────────────────────────────────
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  }
+
+  function fmt(amount) {
+    return new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR', maximumFractionDigits: 2 }).format(Math.abs(amount));
+  }
+
+  function initials2(name) {
+    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  // Close modal on overlay tap
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+</script>
+</body>
+</html>
