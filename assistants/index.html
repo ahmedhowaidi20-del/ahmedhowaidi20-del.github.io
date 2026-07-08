@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Assistants">
 <title>Dental Assistants Schedule</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{
   --primary:#00695C; --primary-dark:#004D40; --primary-light:#E0F2F1;
@@ -81,7 +82,7 @@ select:focus,input:focus{outline:none;border-color:var(--primary)}
 .leave-item .now{color:#E65100;font-weight:700;font-size:12px}
 .xbtn{border:none;background:var(--red-bg);color:var(--red);border-radius:10px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer}
 nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;border:none;background:none;padding:9px 0 7px;font-size:10.5px;color:var(--muted);font-weight:600;cursor:pointer}
+nav button{flex:1;border:none;background:none;padding:9px 0 7px;font-size:9.5px;color:var(--muted);font-weight:600;cursor:pointer}
 nav button .ico{display:block;font-size:21px;margin-bottom:1px}
 nav button.on{color:var(--primary)}
 .gate{position:fixed;inset:0;background:var(--primary-dark);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -94,6 +95,11 @@ nav button.on{color:var(--primary)}
 .footer{text-align:center;font-size:12px;color:var(--muted);padding:8px 0 18px}
 .footer a{color:var(--primary);text-decoration:none;font-weight:700}
 .hidden{display:none!important}
+.notice-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:90;display:flex;align-items:center;justify-content:center;padding:20px}
+.notice-box{background:#fff;border-radius:20px;padding:22px 20px;width:100%;max-width:400px;max-height:80vh;overflow:auto}
+.notice-box h3{color:var(--primary-dark);font-size:16.5px;margin-bottom:10px}
+.notice-box .duty{font-size:13.5px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.notice-box .contact{background:var(--amber-bg);border:1.5px solid #FFE0B2;border-radius:12px;padding:12px;font-size:14px;line-height:1.6;margin-top:14px}
 .preview{background:var(--primary-light);border-radius:12px;padding:11px;font-size:13.5px;margin-top:12px}
 .preview b{color:var(--primary-dark)}
 .warnbox{background:var(--red-bg);border-radius:12px;padding:11px;font-size:12.5px;margin-top:10px;color:var(--red)}
@@ -160,15 +166,33 @@ nav button.on{color:var(--primary)}
       </select>
       <label>Reason</label>
       <select id="lvReason">
-        <option>Planned leave</option><option>Sick leave</option><option>Permission</option><option>Emergency</option><option value="other">Other…</option>
+        <option>Annual leave</option><option>Planned leave</option><option>Sick leave</option><option>Permission</option><option>Emergency</option><option value="other">Other…</option>
       </select>
       <input type="text" id="lvReasonOther" class="hidden" placeholder="Please specify" style="margin-top:8px">
+      <div id="permTimes" class="hidden" style="display:flex;gap:10px;margin-top:8px">
+        <div style="flex:1"><label style="margin-top:0">Permission from</label><input type="time" id="permFrom" style="width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;font-size:15px"></div>
+        <div style="flex:1"><label style="margin-top:0">To</label><input type="time" id="permTo" style="width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;font-size:15px"></div>
+      </div>
       <button class="btn" onclick="submitLeave()">✓ Confirm</button>
     </div>
     <div class="card">
       <h2>📋 Logged leaves</h2>
       <div id="leaveList"></div>
     </div>
+  </section>
+
+  <!-- LOG -->
+  <section id="tab-log" class="hidden">
+    <div class="card">
+      <h2>📊 Leave log — all assistants</h2>
+      <div class="chips" id="logChips"></div>
+    </div>
+    <div id="logContent"></div>
+  </section>
+
+  <!-- CSSD -->
+  <section id="tab-cssd" class="hidden">
+    <div id="cssdContent"></div>
   </section>
 
   <!-- UPDATE -->
@@ -182,6 +206,14 @@ nav button.on{color:var(--primary)}
       <input type="number" id="xlsYear" min="2025" max="2035">
       <div id="xlsPreview"></div>
       <button class="btn hidden" id="publishBtn" onclick="publishSchedule()">📤 Publish to everyone</button>
+    </div>
+    <div class="card">
+      <h2>🧰 Upload CSSD covering (Word)</h2>
+      <p style="font-size:13.5px;color:var(--muted)">Ms. Muneerah's monthly “Daily CSSD covering” Word file. Each assistant then sees her CSSD day in her schedule.</p>
+      <label>Word file (.docx)</label>
+      <input type="file" id="cssdFile" accept=".docx" style="width:100%;padding:10px;border:1.5px dashed var(--line);border-radius:12px;background:#fff">
+      <div id="cssdPreview"></div>
+      <button class="btn hidden" id="cssdPublishBtn" onclick="publishCssd()">📤 Publish CSSD to everyone</button>
     </div>
     <div class="card">
       <h2>⚙️ Connection</h2>
@@ -201,8 +233,19 @@ nav button.on{color:var(--primary)}
   <button id="nav-my" class="on" onclick="setTab('my')"><span class="ico">🙋‍♀️</span>My Week</button>
   <button id="nav-all" onclick="setTab('all')"><span class="ico">🏥</span>All Clinics</button>
   <button id="nav-leave" onclick="setTab('leave')"><span class="ico">📝</span>Leave</button>
+  <button id="nav-cssd" onclick="setTab('cssd')"><span class="ico">🧰</span>CSSD</button>
+  <button id="nav-log" onclick="setTab('log')"><span class="ico">📊</span>Log</button>
   <button id="nav-update" onclick="setTab('update')"><span class="ico">⬆️</span>Update</button>
 </nav>
+
+<div class="notice-overlay hidden" id="coverNotice">
+  <div class="notice-box">
+    <h3>🟡 Cover needed for your duties</h3>
+    <div id="coverDuties"></div>
+    <div class="contact">📞 Please contact <b>Ms. Muneerah</b> to prepare your cover.<br>If Ms. Muneerah is absent or at her night duty, contact <b>Ms. Amani Howsawi</b>.</div>
+    <button class="btn" onclick="document.getElementById('coverNotice').classList.add('hidden')">✓ Understood</button>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -217,7 +260,7 @@ nav button.on{color:var(--primary)}
   var ALIASES = {
     'meelani': 'Melani', 'melani': 'Melani', 'mellani': 'Melani',
     'monerah': 'Monerah', 'muneerah': 'Monerah', 'monirah': 'Monerah',
-    'kholood': 'Kholood', 'kholoud': 'Kholood',
+    'kholood': 'Kholood', 'kholoud': 'Kholood', 'kholod': 'Kholood',
     'dana': 'Dana', 'dania': 'Dania', 'daniah': 'Dania',
     'amani t': 'Amani T', 'amani h': 'Amani H',
     'nojood': 'Nojood', 'nojod': 'Nojood', 'nojoud': 'Nojood',
@@ -383,7 +426,7 @@ const MY2DOC = { AM:'morning', PM:'afternoon', Evening:'evening', full:'all' };
 const DOC2MY = { morning:'AM', afternoon:'PM', evening:'Evening', all:'full' };
 
 /* ================= EMBEDDED DEFAULT DATA (July 2026) ================= */
-const EMBEDDED = {"monthKey":"2026-07","label":"July 2026","roster":["Adawiya","Ahlam","Amani H","Amani T","Dana","Dania","Ebtehal","Kholood","Melani","Monerah","Nojood"],"weeks":[{"title":"July  05 _ 09","start":"2026-07-05","days":[{"date":"2026-07-05","dow":"Sun","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"},{"name":"Ahlam","or":true}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Sherif","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Wael","assistants":[{"name":"Monerah"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Wael","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. lina","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Amani H"}]}]}]},{"date":"2026-07-06","dow":"Mon","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Nojood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mohanad","assistants":[{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Nhal","assistants":[{"name":"Dania"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Oral Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nhal","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. wael","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Monerah"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"}]}]}]},{"date":"2026-07-07","dow":"Tue","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Amani H"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Amani T"}]},{"clinic":"Clinic 3","doctor":"Dr. Kariem","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Dania"}]}]}]},{"date":"2026-07-08","dow":"Wed","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani","with":["Amani H"]},{"name":"Amani H","with":["Melani"]}]},{"clinic":"Clinic 5","doctor":"Dr. Noran","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Ahlam","or":true},{"name":"Amani T"},{"name":"Dania"}]},{"clinic":"Clinic 2","doctor":"Dr. Mohamed Algarni","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nihal","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Monerah"}]}]}]},{"date":"2026-07-09","dow":"Thu","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. wael","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Lina","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Mawadah","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. wael","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]}]}]},{"title":"July  12 _ 16","start":"2026-07-12","days":[{"date":"2026-07-12","dow":"Sun","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"},{"name":"Ahlam","or":true}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Sherif","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Wael","assistants":[{"name":"Monerah"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Wael","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. lina","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Amani H"}]}]}]},{"date":"2026-07-13","dow":"Mon","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Dania"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mohanad","assistants":[{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Nhal","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Oral Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nhal","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. wael","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Monerah"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"}]}]}]},{"date":"2026-07-14","dow":"Tue","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Melani"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Amani T"}]},{"clinic":"Clinic 3","doctor":"Dr. Kariem","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Dania"}]}]}]},{"date":"2026-07-15","dow":"Wed","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani","with":["Amani H"]},{"name":"Amani H","with":["Melani"]}]},{"clinic":"Clinic 5","doctor":"Dr. Noran","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Ahlam","or":true},{"name":"Amani T"},{"name":"Dania"}]},{"clinic":"Clinic 2","doctor":"Dr. Mohamed Algarni","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nihal","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Monerah"}]}]}]},{"date":"2026-07-16","dow":"Thu","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. wael","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Lina","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Mawadah","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. wael","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]}]}]},{"title":"July  19 _ 23","start":"2026-07-19","days":[{"date":"2026-07-19","dow":"Sun","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"},{"name":"Ahlam","or":true}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"},{"name":"Adawiya"}]},{"clinic":"Clinic 3","doctor":"Dr. Sherif","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Wael","assistants":[{"name":"Monerah"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Adawiya"},{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Wael","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. lina","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Amani H"}]}]}]},{"date":"2026-07-20","dow":"Mon","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Amani T"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mohanad","assistants":[{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Nhal","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Oral Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nhal","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. wael","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Monerah"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"}]}]}]},{"date":"2026-07-21","dow":"Tue","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Adawiya"},{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Melani"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Adawiya"},{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Amani T"}]},{"clinic":"Clinic 3","doctor":"Dr. Kariem","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Dania"}]}]}]},{"date":"2026-07-22","dow":"Wed","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani","with":["Amani H"]},{"name":"Amani H","with":["Melani"]}]},{"clinic":"Clinic 5","doctor":"Dr. Noran","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Ahlam","or":true},{"name":"Amani T"},{"name":"Dania"}]},{"clinic":"Clinic 2","doctor":"Dr. Mohamed Algarni","assistants":[{"name":"Adawiya"},{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nihal","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Adawiya"}]},{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Monerah"}]}]}]},{"date":"2026-07-23","dow":"Thu","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. wael","assistants":[{"name":"Adawiya"},{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Lina","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Mawadah","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. wael","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Adawiya"},{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]}]}]},{"title":"July  26 _ 30","start":"2026-07-26","days":[{"date":"2026-07-26","dow":"Sun","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"},{"name":"Ahlam","or":true}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Sherif","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Wael","assistants":[{"name":"Monerah"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Wael","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. lina","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Amani H"}]}]}]},{"date":"2026-07-27","dow":"Mon","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Nojood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mohanad","assistants":[{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Nhal","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Oral Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nhal","assistants":[{"name":"Dana"},{"name":"Ebtehal"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. wael","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Ebtehal"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"}]}]}]},{"date":"2026-07-28","dow":"Tue","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Ebtehal"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Amani T"}]},{"clinic":"Clinic 3","doctor":"Dr. Kariem","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Dania"}]}]}]},{"date":"2026-07-29","dow":"Wed","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani","with":["Amani H"]},{"name":"Amani H","with":["Melani"]}]},{"clinic":"Clinic 5","doctor":"Dr. Noran","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Ahlam","or":true},{"name":"Amani T"},{"name":"Dania"}]},{"clinic":"Clinic 2","doctor":"Dr. Mohamed Algarni","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nihal","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Monerah"}]}]}]},{"date":"2026-07-30","dow":"Thu","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. wael","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Lina","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Mawadah","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. wael","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]}]}]}]};
+const EMBEDDED = {"monthKey":"2026-07","label":"July 2026","roster":["Adawiya","Ahlam","Amani H","Amani T","Dana","Dania","Ebtehal","Kholood","Melani","Monerah","Nojood"],"weeks":[{"title":"July  05 _ 09","start":"2026-07-05","days":[{"date":"2026-07-05","dow":"Sun","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"},{"name":"Ahlam","or":true}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Sherif","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Wael","assistants":[{"name":"Monerah"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Wael","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. lina","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Amani H"}]}]}]},{"date":"2026-07-06","dow":"Mon","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Nojood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mohanad","assistants":[{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Nhal","assistants":[{"name":"Dania"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Oral Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nhal","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. wael","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Monerah"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"}]}]}]},{"date":"2026-07-07","dow":"Tue","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Amani H"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Amani T"}]},{"clinic":"Clinic 3","doctor":"Dr. Kariem","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Dania"}]}]}]},{"date":"2026-07-08","dow":"Wed","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani","with":["Amani H"]},{"name":"Amani H","with":["Melani"]}]},{"clinic":"Clinic 5","doctor":"Dr. Noran","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Ahlam","or":true},{"name":"Amani T"},{"name":"Dania"}]},{"clinic":"Clinic 2","doctor":"Dr. Mohamed Algarni","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nihal","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Monerah"}]}]}]},{"date":"2026-07-09","dow":"Thu","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. wael","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Lina","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Mawadah","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. wael","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]}]}]},{"title":"July  12 _ 16","start":"2026-07-12","days":[{"date":"2026-07-12","dow":"Sun","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"},{"name":"Ahlam","or":true}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Sherif","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Wael","assistants":[{"name":"Monerah"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Wael","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. lina","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Amani H"}]}]}]},{"date":"2026-07-13","dow":"Mon","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Dania"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mohanad","assistants":[{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Nhal","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Oral Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nhal","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. wael","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Monerah"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"}]}]}]},{"date":"2026-07-14","dow":"Tue","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Melani"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Amani T"}]},{"clinic":"Clinic 3","doctor":"Dr. Kariem","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Dania"}]}]}]},{"date":"2026-07-15","dow":"Wed","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani","with":["Amani H"]},{"name":"Amani H","with":["Melani"]}]},{"clinic":"Clinic 5","doctor":"Dr. Noran","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Ahlam","or":true},{"name":"Amani T"},{"name":"Dania"}]},{"clinic":"Clinic 2","doctor":"Dr. Mohamed Algarni","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nihal","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Monerah"}]}]}]},{"date":"2026-07-16","dow":"Thu","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. wael","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Lina","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Mawadah","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. wael","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]}]}]},{"title":"July  19 _ 23","start":"2026-07-19","days":[{"date":"2026-07-19","dow":"Sun","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"},{"name":"Ahlam","or":true}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"},{"name":"Adawiya"}]},{"clinic":"Clinic 3","doctor":"Dr. Sherif","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Wael","assistants":[{"name":"Monerah"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Adawiya"},{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Wael","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. lina","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Amani H"}]}]}]},{"date":"2026-07-20","dow":"Mon","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Amani T"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mohanad","assistants":[{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Nhal","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Oral Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nhal","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. wael","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Monerah"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"}]}]}]},{"date":"2026-07-21","dow":"Tue","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Adawiya"},{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Melani"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Adawiya"},{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Amani T"}]},{"clinic":"Clinic 3","doctor":"Dr. Kariem","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Dania"}]}]}]},{"date":"2026-07-22","dow":"Wed","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani","with":["Amani H"]},{"name":"Amani H","with":["Melani"]}]},{"clinic":"Clinic 5","doctor":"Dr. Noran","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Ahlam","or":true},{"name":"Amani T"},{"name":"Dania"}]},{"clinic":"Clinic 2","doctor":"Dr. Mohamed Algarni","assistants":[{"name":"Adawiya"},{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nihal","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Adawiya"}]},{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Monerah"}]}]}]},{"date":"2026-07-23","dow":"Thu","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. wael","assistants":[{"name":"Adawiya"},{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Lina","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Mawadah","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. wael","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Adawiya"},{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]}]}]},{"title":"July  26 _ 30","start":"2026-07-26","days":[{"date":"2026-07-26","dow":"Sun","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"},{"name":"Ahlam","or":true}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Sherif","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Wael","assistants":[{"name":"Monerah"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Wael","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. lina","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Amani H"}]}]}]},{"date":"2026-07-27","dow":"Mon","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Nojood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mohanad","assistants":[{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Nhal","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Oral Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nhal","assistants":[{"name":"Dana"},{"name":"Ebtehal"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. wael","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Ebtehal"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani"}]}]}]},{"date":"2026-07-28","dow":"Tue","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Sherif","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Ebtehal"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Ahlam"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Lina","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Noran","assistants":[{"name":"Melani"},{"name":"Amani H"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 2","doctor":"Dr. Wael","assistants":[{"name":"Amani T"}]},{"clinic":"Clinic 3","doctor":"Dr. Kariem","assistants":[{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Dania"}]}]}]},{"date":"2026-07-29","dow":"Wed","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Dania"},{"name":"Amani T"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Hewaidi","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Melani","with":["Amani H"]},{"name":"Amani H","with":["Melani"]}]},{"clinic":"Clinic 5","doctor":"Dr. Noran","assistants":[{"name":"Nojood"}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. Kariem","assistants":[{"name":"Ahlam","or":true},{"name":"Amani T"},{"name":"Dania"}]},{"clinic":"Clinic 2","doctor":"Dr. Mohamed Algarni","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Nihal","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Amira","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Hewaidi","assistants":[{"name":"Nojood"}]}]},{"name":"Evening","clinics":[{"clinic":"Clinic 4","doctor":"Dr. Nihal","assistants":[{"name":"Monerah"}]}]}]},{"date":"2026-07-30","dow":"Thu","sessions":[{"name":"AM","clinics":[{"clinic":"Clinic 1","doctor":"Surgery","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. wael","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Lina","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Dr. Mawadah","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]},{"name":"PM","clinics":[{"clinic":"Clinic 1","doctor":"Dr. wael","assistants":[{"name":"Amani T"},{"name":"Ahlam"}]},{"clinic":"Clinic 2","doctor":"Dr. Fatima","assistants":[{"name":"Kholood"}]},{"clinic":"Clinic 3","doctor":"Dr. Amira","assistants":[{"name":"Ebtehal"},{"name":"Dana"}]},{"clinic":"Clinic 4","doctor":"Dr. Mawadah","assistants":[{"name":"Amani H"},{"name":"Melani"}]},{"clinic":"Clinic 5","doctor":"Surgery","assistants":[{"name":"Nojood","with":["Dania"]},{"name":"Dania","with":["Nojood"]}]}]}]}]}],"cssd":{"2026-07-05":"Kholood","2026-07-06":"Amani T","2026-07-07":"Melani","2026-07-08":"Monerah","2026-07-09":"Ahlam","2026-07-12":"Dana","2026-07-13":"Monerah","2026-07-14":"Amani H","2026-07-15":"Amani T","2026-07-16":"Kholood","2026-07-19":"Dana","2026-07-20":"Ahlam","2026-07-21":"Amani H","2026-07-22":"Monerah","2026-07-23":"Melani","2026-07-26":"Ebtehal","2026-07-27":"Kholood","2026-07-28":"Ahlam","2026-07-29":"Dana","2026-07-30":"Amani T"}};
 
 /* Doctors' weekly schedule — snapshot of the clinicavailability page (source of truth
    for which doctor works each clinic). Refreshed live from that page on every load. */
@@ -421,11 +464,17 @@ document.getElementById('gateCode').addEventListener('keydown', e => { if (e.key
 if (localStorage.getItem('asst_unlocked')==='1') document.getElementById('gate').classList.add('hidden');
 
 /* ================= DATA ACCESS ================= */
+function mergeSched(k, data){
+  const prev = schedules[k];
+  if (prev && prev.cssd && !data.cssd) data.cssd = prev.cssd;   // keep CSSD if newer copy lacks it
+  if (prev && prev.weeks && prev.weeks.length && (!data.weeks || !data.weeks.length)) data.weeks = prev.weeks;
+  schedules[k] = data;
+}
 function loadCache(){
   schedules[EMBEDDED.monthKey] = EMBEDDED;
   try {
     const c = JSON.parse(localStorage.getItem('asst_schedules')||'{}');
-    for (const k in c) schedules[k] = c[k];
+    for (const k in c) mergeSched(k, c[k]);
   } catch(e){}
   try { absRows = JSON.parse(localStorage.getItem('asst_abs')||'[]'); } catch(e){}
   try { bookings = JSON.parse(localStorage.getItem('asst_book')||'[]'); } catch(e){}
@@ -458,6 +507,10 @@ function schedFor(iso){
   const keys = Object.keys(schedules).sort();
   return keys.length ? schedules[keys[keys.length-1]] : null;
 }
+function cssdFor(iso){
+  const s = schedules[iso.slice(0,7)];
+  return s && s.cssd ? (s.cssd[iso] || null) : null;
+}
 function dayFor(iso){
   const s = schedFor(iso);
   if (!s) return null;
@@ -466,7 +519,7 @@ function dayFor(iso){
 }
 function roster(){
   const set = {};
-  for (const k in schedules) (schedules[k].roster||[]).forEach(n => set[n]=1);
+  for (const k in schedules){ (schedules[k].roster||[]).forEach(n => set[n]=1); Object.values(schedules[k].cssd||{}).forEach(n => set[n]=1); }
   assistantAbs().forEach(l => set[ScheduleParser.normName(l.name)]=1);
   return Object.keys(set).sort();
 }
@@ -521,8 +574,6 @@ function slotInfo(clinic, excelDoc, iso, sess){
     const bk = bookingFor(clinic, iso, sess);
     if (bk) status = { cls:'booked', text:'📌 Clinic utilized by '+bk.doctor+bkTime(bk) };
   }
-  if (fromLive && excelIsDr && doctor && /^dr/i.test(doctor) && normDoc(excelDoc) !== normDoc(doctor))
-    note = 'ℹ️ Assistant sheet says '+String(excelDoc).trim()+' — doctors’ schedule shows '+doctor;
   return { doctor, note, status };
 }
 
@@ -537,7 +588,7 @@ async function sbFetchAll(){
   if (!as.ok) throw new Error('HTTP '+as.status);
   absRows = (await as.json()).map(a => Object.assign(a, { date_from: a.date_from||a.date, date_to: a.date_to||a.date, session: a.session||'all' }));
   bookings = bs.ok ? await bs.json() : [];
-  if (ss.ok) (await ss.json()).forEach(row => { schedules[row.month_key] = row.data; });
+  if (ss.ok) (await ss.json()).forEach(row => { mergeSched(row.month_key, row.data); });
   saveCache();
 }
 async function sync(){
@@ -586,8 +637,9 @@ function renderMy(){
   const asg = assignmentsFor(me, day);
   html += '<div class="hero"><div class="date">Today · '+fmtNice(today)+'</div><div class="who">'+esc(me)+'</div>';
   if (myLeave.length){
-    html += '<div class="free">🟡 You have '+esc(myLeave[0].reason||'leave')+' logged today ('+sessDisp(myLeave[0].session)+').</div>';
+    html += '<div class="free">🟡 You have '+esc(myLeave[0].reason||'leave')+' logged today ('+sessDisp(myLeave[0].session)+').<br><span style="font-size:12.5px;opacity:.9">📞 Coordinate your cover with Ms. Muneerah — or Ms. Amani Howsawi if she is absent or at her night duty.</span></div>';
   }
+  if (cssdFor(today)===me) html += '<div class="sessrow" style="background:rgba(255,213,79,.3)"><div class="sname">🧰 CSSD DUTY</div><div class="cl">Deliver the instruments to CSSD today</div></div>';
   if (!day){ html += '<div class="free">🌴 No clinic schedule for today (weekend or outside schedule).</div>'; }
   else if (!asg.length){ html += '<div class="free">✨ No clinic assigned to you today.</div>'; }
   else asg.forEach(a => {
@@ -619,6 +671,7 @@ function renderMy(){
     const lv = leaveHits(iso).filter(l => ScheduleParser.normName(l.name)===me);
     html += '<div class="dayrow"><div class="dhead"><span>'+fmtNice(iso)+'</span>'+(iso===today?'<span class="today-tag">TODAY</span>':'')+'</div>';
     if (lv.length) html += '<div class="offday">🟡 '+esc(lv[0].reason||'Leave')+' ('+sessDisp(lv[0].session)+')</div>';
+    if (cssdFor(iso)===me) html += '<div class="offday" style="color:#8a6d00;font-weight:700">🧰 CSSD duty — deliver instruments to CSSD</div>';
     if (!d) html += '<div class="offday">No schedule (weekend / not in schedule)</div>';
     else if (!a.length) html += (lv.length? '' : '<div class="offday">✨ No clinic assigned</div>');
     else a.forEach(x => {
@@ -648,6 +701,8 @@ function renderAllClinics(){
   let html = '';
   const lv = dedupeLeaves(leaveHits(allDate));
   if (lv.length) html += '<div class="leave-banner">🟡 <b>Assistants on leave:</b> '+lv.map(l => esc(ScheduleParser.normName(l.name))+(l.session!=='all'?' ('+sessDisp(l.session)+')':'')).join(', ')+'</div>';
+  const cssdName = cssdFor(allDate);
+  if (cssdName) html += '<div class="leave-banner" style="background:#FFF8E1;border-color:#FFE082">🧰 <b>CSSD covering:</b> '+esc(cssdName)+(onLeave(cssdName, allDate)?' <b style="color:#C62828">(on leave!)</b>':'')+'</div>';
   // Doctors summary for this day — straight from the doctors' clinicavailability schedule + absences
   const dowA = new Date(allDate+'T12:00:00').getDay();
   const dayT = dowA <= 4 ? (docSched[String(dowA)] || null) : null;
@@ -731,6 +786,7 @@ function renderLeave(){
 }
 document.getElementById('lvReason').addEventListener('change', function(){
   document.getElementById('lvReasonOther').classList.toggle('hidden', this.value!=='other');
+  document.getElementById('permTimes').classList.toggle('hidden', this.value!=='Permission');
 });
 function workingDays(from, to){ // Sun–Thu between from..to inclusive
   const out = [];
@@ -743,12 +799,38 @@ function workingDays(from, to){ // Sun–Thu between from..to inclusive
   }
   return out;
 }
+function dutiesFor(name, from, to, sess){ // duties needing cover during the leave
+  const out = [];
+  for (const iso of workingDays(from, to)){
+    const d = dayFor(iso);
+    assignmentsFor(name, d).forEach(a => {
+      if (sess === 'all' || MY2DOC[a.sess] === sess){
+        const doc = slotInfo(a.clinic, a.doctor, iso, a.sess).doctor;
+        out.push(fmtShort(iso)+' · '+SESS_LABEL[a.sess]+' · '+a.clinic+(doc?' ('+doc+')':'')+(a.or?' + OR duty':''));
+      }
+    });
+    if (cssdFor(iso) === name) out.push(fmtShort(iso)+' · 🧰 CSSD duty (deliver instruments)');
+  }
+  return out;
+}
+function showCoverNotice(name, from, to, sess){
+  const duties = dutiesFor(name, from, to, sess);
+  document.getElementById('coverDuties').innerHTML = duties.length
+    ? '<p style="font-size:13.5px;color:var(--muted);margin-bottom:8px">These duties of <b>'+esc(name)+'</b> need cover:</p>'
+      + duties.map(x => '<div class="duty">'+esc(x)+'</div>').join('')
+    : '<p style="font-size:13.5px;color:var(--muted)">No clinic duties found on the schedule for these dates, but please still coordinate the cover.</p>';
+  document.getElementById('coverNotice').classList.remove('hidden');
+}
 async function submitLeave(){
   const name = document.getElementById('lvName').value;
   const from = document.getElementById('lvFrom').value;
   const to = document.getElementById('lvTo').value || from;
   let reason = document.getElementById('lvReason').value;
   if (reason==='other') reason = document.getElementById('lvReasonOther').value.trim() || 'Other';
+  if (document.getElementById('lvReason').value==='Permission'){
+    const tf = document.getElementById('permFrom').value, tt = document.getElementById('permTo').value;
+    if (tf && tt) reason = 'Permission '+tf+'–'+tt;
+  }
   if (!name || !from){ toast('Please choose a name and a from-date.'); return; }
   if (to < from){ toast('"To" date is before "From" date.'); return; }
   if (!online){ toast('⚠️ Not connected — leave cannot be saved right now.'); return; }
@@ -758,7 +840,12 @@ async function submitLeave(){
   // one row per working day — same format the doctors’ page writes
   const rows = days.map(d => ({ type:'assistant', name, date: d, session: sess, reason, date_from: from, date_to: to }));
   const r = await fetch(SUPABASE_URL+'/rest/v1/'+T_ABS, { method:'POST', headers: sbHeaders(), body: JSON.stringify(rows) });
-  if (r.ok){ toast('✓ Saved. Assistants and doctors can all see it now.'); document.getElementById('lvFrom').value=''; document.getElementById('lvTo').value=''; await sync(); }
+  if (r.ok){
+    toast('✓ Saved. Assistants and doctors can all see it now.');
+    document.getElementById('lvFrom').value=''; document.getElementById('lvTo').value='';
+    await sync();
+    showCoverNotice(name, from, to, sess);
+  }
   else toast('Error saving ('+r.status+').');
 }
 async function cancelLeave(idx){
@@ -829,9 +916,158 @@ function saveKey(){
   sbKey = v; localStorage.setItem('asst_sb_key', v); sync();
 }
 
+/* ---- CSSD covering: parse Muneerah's Word file (.docx) ---- */
+let parsedCssd = null;
+document.getElementById('cssdFile').addEventListener('change', async function(){
+  const f = this.files[0];
+  if (!f) return;
+  try {
+    const zip = await JSZip.loadAsync(await f.arrayBuffer());
+    const xml = await zip.file('word/document.xml').async('string');
+    const trs = xml.match(/<w:tr[ >][\s\S]*?<\/w:tr>/g) || [];
+    const year = parseInt(document.getElementById('xlsYear').value, 10) || new Date().getFullYear();
+    const map = {}; let monthNum = null;
+    trs.forEach(r => {
+      const cells = (r.match(/<w:tc[ >][\s\S]*?<\/w:tc>/g) || []).map(c =>
+        (c.match(/<w:t[^>]*>([^<]*)<\/w:t>/g) || []).map(t => t.replace(/<[^>]+>/g,'')).join('').trim());
+      if (cells.length >= 2 && cells[0] && !/assistant/i.test(cells[0])){
+        const dm = (cells[1]||'').match(/(\d{1,2})\s*\/\s*(\d{1,2})/);
+        if (dm){
+          const dd = parseInt(dm[1],10), mm = parseInt(dm[2],10);
+          monthNum = mm;
+          map[year+'-'+String(mm).padStart(2,'0')+'-'+String(dd).padStart(2,'0')] = ScheduleParser.normName(cells[0]);
+        }
+      }
+    });
+    if (!Object.keys(map).length) throw new Error('No "Assistant / Date / Day" table found in this file.');
+    parsedCssd = { map, monthKey: year+'-'+String(monthNum).padStart(2,'0') };
+    const days = Object.keys(map).sort();
+    document.getElementById('cssdPreview').innerHTML = '<div class="preview"><b>CSSD covering · '+parsedCssd.monthKey+'</b><br>'
+      + days.length+' days · ' + days.map(d => d.slice(8)+': '+esc(map[d])).join(' · ')
+      + '<br><b>Check the Year field above (in the Excel card) if the month/year looks wrong.</b></div>';
+    document.getElementById('cssdPublishBtn').classList.remove('hidden');
+  } catch(e){
+    parsedCssd = null;
+    document.getElementById('cssdPreview').innerHTML = '<div class="warnbox">Could not read this file: '+esc(e.message)+'</div>';
+    document.getElementById('cssdPublishBtn').classList.add('hidden');
+  }
+});
+async function publishCssd(){
+  if (!parsedCssd) return;
+  if (!online){ toast('⚠️ Not connected — cannot publish.'); return; }
+  const key = parsedCssd.monthKey;
+  // merge into the month's schedule row (create a minimal one if the Excel isn't uploaded yet)
+  let base = schedules[key] || { monthKey: key, label: key, roster: [], weeks: [] };
+  base = JSON.parse(JSON.stringify(base));
+  base.cssd = parsedCssd.map;
+  const row = { month_key: key, label: base.label || key, data: base };
+  const r = await fetch(SUPABASE_URL+'/rest/v1/'+T_SCHED+'?on_conflict=month_key', {
+    method:'POST', headers: Object.assign(sbHeaders(), {'Prefer':'resolution=merge-duplicates'}), body: JSON.stringify(row)
+  });
+  if (r.ok){
+    schedules[key] = base; saveCache();
+    toast('✓ CSSD covering published to everyone!');
+    document.getElementById('cssdPublishBtn').classList.add('hidden');
+    document.getElementById('cssdPreview').innerHTML = '';
+    document.getElementById('cssdFile').value = '';
+    renderAll();
+  } else toast('Error publishing ('+r.status+').');
+}
+
+/* ================= RENDER: LEAVE LOG ================= */
+let logPeriod = 'month';
+function leaveCat(reason){
+  const r = (reason||'').toLowerCase();
+  if (r.includes('sick')) return 'sick';
+  if (r.includes('permission')) return 'perm';
+  if (r.includes('annual')) return 'annual';
+  if (r.includes('planned')) return 'planned';
+  if (r.includes('emergency')) return 'emerg';
+  return 'other';
+}
+function leaveHours(l){
+  const m = (l.reason||'').match(/(\d{1,2}:\d{2})\s*[–—-]\s*(\d{1,2}:\d{2})/);
+  if (m){
+    const a = m[1].split(':'), b = m[2].split(':');
+    return Math.max(0, ((+b[0])*60+(+b[1]) - (+a[0])*60-(+a[1])) / 60);
+  }
+  return l.session==='all' ? 8 : (l.session==='morning' ? 4 : (l.session==='afternoon' ? 3 : 2));
+}
+function inLogPeriod(iso){
+  const t = todayISO();
+  if (logPeriod==='month') return iso.slice(0,7) === t.slice(0,7);
+  if (logPeriod==='year') return iso.slice(0,4) === t.slice(0,4);
+  return true;
+}
+function setLogPeriod(p){ logPeriod = p; renderLeaveLog(); }
+const CAT_LABEL = { perm:'Permissions', sick:'Sick', annual:'Annual', planned:'Planned', emerg:'Emergency', other:'Other' };
+function renderLeaveLog(){
+  const chips = document.getElementById('logChips');
+  chips.innerHTML = [['month','This month'],['year','This year'],['all','All time']].map(p =>
+    '<button class="chip'+(logPeriod===p[0]?' on':'')+'" onclick="setLogPeriod(\''+p[0]+'\')">'+p[1]+'</button>').join('');
+  const rows = assistantAbs().filter(l => inLogPeriod(l.date));   // one row = one working day
+  const box = document.getElementById('logContent');
+  if (!rows.length){ box.innerHTML = '<div class="card"><p style="font-size:14px;color:var(--muted)">No assistant leaves in this period.</p></div>'; return; }
+  // per-assistant totals
+  const per = {};
+  rows.forEach(l => {
+    const nm = ScheduleParser.normName(l.name);
+    per[nm] = per[nm] || { perm:0, permN:0, sick:0, annual:0, planned:0, emerg:0, other:0 };
+    const c = leaveCat(l.reason);
+    if (c === 'perm'){ per[nm].perm += leaveHours(l); per[nm].permN++; }
+    else per[nm][c]++;
+  });
+  let html = '<div class="card"><h2>Σ Totals per assistant</h2>';
+  Object.keys(per).sort().forEach(nm => {
+    const p = per[nm], parts = [];
+    if (p.permN) parts.push('🕐 Permissions: <b>'+(Math.round(p.perm*10)/10)+' h</b> ('+p.permN+'×)');
+    if (p.sick) parts.push('🤒 Sick: <b>'+p.sick+' d</b>');
+    if (p.annual) parts.push('🌴 Annual: <b>'+p.annual+' d</b>');
+    if (p.planned) parts.push('📅 Planned: <b>'+p.planned+' d</b>');
+    if (p.emerg) parts.push('🚨 Emergency: <b>'+p.emerg+' d</b>');
+    if (p.other) parts.push('📝 Other: <b>'+p.other+' d</b>');
+    html += '<div class="dayrow"><div class="dhead"><span>'+esc(nm)+'</span></div><div style="font-size:13px;color:var(--muted);margin-top:4px;line-height:1.7">'+parts.join(' · ')+'</div></div>';
+  });
+  html += '<div class="section-note">Days counted as working days (Sun–Thu). Permissions without hours count by session (Morning 4h, Afternoon 3h, Evening 2h, full day 8h).</div></div>';
+  // history
+  const hist = groupedLeaves().filter(l => inLogPeriod(l.date_from) || inLogPeriod(l.date_to)).sort((a,b) => a.date_from < b.date_from ? 1 : -1);
+  html += '<div class="card"><h2>🗒️ History</h2>' + (hist.length ? hist.map(l =>
+    '<div class="leave-item"><span class="nm">'+esc(l.name)+'</span><div class="meta">'+fmtShort(l.date_from)+(l.date_to!==l.date_from?' → '+fmtShort(l.date_to):'')
+    + ' · '+(l.session==='all'?'Full day':sessDisp(l.session))+' · '+esc(l.reason)+'</div></div>').join('') : '<p style="font-size:13.5px;color:var(--muted)">Nothing here.</p>') + '</div>';
+  box.innerHTML = html;
+}
+
+/* ================= RENDER: CSSD ================= */
+function renderCssd(){
+  const box = document.getElementById('cssdContent');
+  const today = todayISO();
+  let html = '';
+  Object.keys(schedules).sort().forEach(k => {
+    const s = schedules[k];
+    if (!s.cssd || !Object.keys(s.cssd).length) return;
+    html += '<div class="card"><h2>🧰 CSSD covering · '+esc(s.label||k)+'</h2>'
+      + '<div class="section-note" style="margin-bottom:8px">Deliver the instruments to CSSD — one assistant per day (by Ms. Muneerah)</div>';
+    Object.keys(s.cssd).sort().forEach(iso => {
+      const nm = s.cssd[iso];
+      const isToday = iso === today;
+      const past = iso < today;
+      const off = onLeave(nm, iso);
+      const mine = nm === me;
+      html += '<div class="dayrow" style="'+(isToday?'background:#FFF8E1;border-radius:10px;padding:10px 8px;':(past?'opacity:.45;':''))+'">'
+        + '<div class="dhead"><span>'+fmtNice(iso)+(isToday?' <span class="today-tag">TODAY</span>':'')+'</span>'
+        + '<span style="font-weight:800;'+(mine?'color:var(--primary-dark);':'')+'">'+esc(nm)+(mine?' 🙋‍♀️':'')+(off?' 🟡':'')+'</span></div>'
+        + (off && !past ? '<div class="offday" style="color:#C62828;font-weight:700">⚠️ On leave this day — needs replacement</div>' : '')
+        + '</div>';
+    });
+    html += '</div>';
+  });
+  if (!html) html = '<div class="card"><p style="font-size:14px;color:var(--muted)">No CSSD covering uploaded yet. Ms. Muneerah can add it in the Update tab.</p></div>';
+  box.innerHTML = html;
+}
+
 /* ================= TABS + BOOT ================= */
 function setTab(t){
-  ['my','all','leave','update'].forEach(x => {
+  ['my','all','leave','cssd','log','update'].forEach(x => {
     document.getElementById('tab-'+x).classList.toggle('hidden', x!==t);
     document.getElementById('nav-'+x).classList.toggle('on', x===t);
   });
@@ -841,7 +1077,7 @@ function renderAll(){
   const keys = Object.keys(schedules).sort();
   const cur = schedules[todayISO().slice(0,7)] || schedules[keys[keys.length-1]];
   document.getElementById('monthLabel').textContent = cur ? cur.label : '';
-  renderMy(); renderAllClinics(); renderLeave(); renderConn();
+  renderMy(); renderAllClinics(); renderLeave(); renderCssd(); renderLeaveLog(); renderConn();
 }
 loadCache();
 renderAll();
