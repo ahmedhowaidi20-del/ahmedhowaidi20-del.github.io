@@ -820,7 +820,7 @@ async function publishSchedule(){
 }
 function renderConn(){
   const info = document.getElementById('connInfo');
-  if (online) info.innerHTML = '🟢 Connected — shares the same live database as the doctors’ Clinic Availability page. Leaves, doctor absences and clinic bookings sync both ways.';
+  if (online){ info.innerHTML = '🟢 Connected — shares the same live database as the doctors’ Clinic Availability page. Leaves, doctor absences and clinic bookings sync both ways.'; document.getElementById('keyBox').classList.add('hidden'); }
   else { info.innerHTML = '🔴 Could not reach the database. Data shown is the last saved copy. If this persists, paste the current key below.'; document.getElementById('keyBox').classList.remove('hidden'); }
 }
 function saveKey(){
