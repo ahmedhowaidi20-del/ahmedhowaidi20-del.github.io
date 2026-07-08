@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0D47A1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dental Tools">
+<title>Dental &amp; Maxillofacial — Department Tools</title>
+<style>
+:root{
+  --blue:#1565C0; --blue-dark:#0D47A1;
+  --teal:#00796B; --teal-dark:#004D40;
+  --grey:#78909C;
+  --ink:#1a1a1a; --muted:#667; --bg:#F1F4F8; --card:#fff; --line:#E1E6EC;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
+header{background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;padding:calc(26px + env(safe-area-inset-top)) 20px 26px;text-align:center}
+header .tooth{font-size:44px;margin-bottom:8px}
+header h1{font-size:21px;font-weight:800;letter-spacing:.2px}
+header p{font-size:13.5px;opacity:.88;margin-top:5px}
+main{max-width:520px;width:100%;margin:0 auto;padding:20px 16px 10px;flex:1}
+.card{display:block;background:var(--card);border-radius:20px;padding:20px 18px;margin-bottom:16px;box-shadow:0 2px 10px rgba(13,71,161,.10);text-decoration:none;color:var(--ink);border:1.5px solid transparent;transition:transform .12s ease, box-shadow .12s ease;position:relative;overflow:hidden}
+.card:active{transform:scale(.98)}
+.card .row{display:flex;align-items:center;gap:16px}
+.card .icon{width:62px;height:62px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0}
+.card.doctors .icon{background:#E3F2FD}
+.card.assistants .icon{background:#E0F2F1}
+.card.lab .icon{background:#ECEFF1}
+.card h2{font-size:17.5px;font-weight:800;margin-bottom:3px}
+.card.doctors h2{color:var(--blue-dark)}
+.card.assistants h2{color:var(--teal-dark)}
+.card.lab h2{color:#455A64}
+.card p{font-size:13.5px;color:var(--muted);line-height:1.45}
+.card .go{margin-left:auto;font-size:22px;color:var(--muted);flex-shrink:0}
+.card .tag{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.5px;padding:3px 9px;border-radius:9px;margin-bottom:6px;text-transform:uppercase}
+.card.doctors .tag{background:#E3F2FD;color:var(--blue-dark)}
+.card.assistants .tag{background:#E0F2F1;color:var(--teal-dark)}
+.card.lab .tag{background:#ECEFF1;color:#546E7A}
+.card.lab{opacity:.72;pointer-events:none}
+.card.lab .soon{position:absolute;top:14px;right:-34px;background:var(--grey);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:1px;padding:4px 38px;transform:rotate(38deg)}
+.footer{text-align:center;font-size:12px;color:var(--muted);padding:14px 16px calc(20px + env(safe-area-inset-bottom))}
+.footer a{color:var(--blue);text-decoration:none;font-weight:700}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tooth">🦷</div>
+  <h1>Dental &amp; Maxillofacial Department</h1>
+  <p>King Abdullah Medical City · Makkah — staff tools</p>
+</header>
+
+<main>
+  <a class="card doctors" href="/clinicavailability/">
+    <div class="row">
+      <div class="icon">🏥</div>
+      <div>
+        <span class="tag">For doctors</span>
+        <h2>Clinic Availability</h2>
+        <p>Free clinics in real time — log absences, book open sessions, weekly schedule.</p>
+      </div>
+      <div class="go">›</div>
+    </div>
+  </a>
+
+  <a class="card assistants" href="/assistants/">
+    <div class="row">
+      <div class="icon">🙋‍♀️</div>
+      <div>
+        <span class="tag">For dental assistants</span>
+        <h2>Assistant Duties</h2>
+        <p>Find your clinic today and all week, covers &amp; OR duty, log leave — synced with the doctors' schedule.</p>
+      </div>
+      <div class="go">›</div>
+    </div>
+  </a>
+
+  <div class="card lab">
+    <div class="soon">SOON</div>
+    <div class="row">
+      <div class="icon">🧪</div>
+      <div>
+        <span class="tag">For lab technicians</span>
+        <h2>Dental Lab</h2>
+        <p>Lab case tracking &amp; workflow — coming soon.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="footer">🦷 Created by <b>Dr. Ahmed Howaidi</b> · <a href="tel:0566562177">📞 0566562177</a></div>
+
+</body>
+</html>
