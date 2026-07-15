@@ -44,7 +44,7 @@ color:rgba(255,209,102,.10);text-transform:uppercase;
 transform:rotate(-8deg);user-select:none;
 }
 /* Lift real content above watermark */
-h1,.sub,.card,.upcoming,footer{position:relative;z-index:1;}
+h1,.sub,.card,.upcoming,.results,footer{position:relative;z-index:1;}
 h1{font-size:1.1rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;text-align:center;}
 .sub{color:var(--muted);font-size:.8rem;margin-bottom:24px;text-align:center;}
 .card{
@@ -64,8 +64,9 @@ border:1px solid rgba(91,192,190,.2);
 .unit{background:rgba(91,192,190,.12);border-radius:10px;padding:10px 12px;min-width:62px;text-align:center;}
 .unit .num{font-size:1.6rem;font-weight:700;color:var(--gold);}
 .unit .u{font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
-.upcoming{margin-top:26px;width:100%;max-width:420px;}
-.upcoming h2{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;text-align:center;}
+.upcoming,.results{margin-top:26px;width:100%;max-width:420px;}
+.upcoming h2,.results h2{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;text-align:center;}
+.result-score{color:var(--gold);font-weight:700;white-space:nowrap;}
 .row{display:flex;justify-content:space-between;padding:9px 12px;border-radius:8px;font-size:.82rem;gap:8px;}
 .row:nth-child(odd){background:rgba(255,255,255,.03);}
 .row .m{color:var(--text);}
@@ -129,6 +130,11 @@ font-family:inherit;transition:background .2s, transform .15s;
 <div class="unit"><div class="num" id="m">0</div><div class="u">Min</div></div>
 <div class="unit"><div class="num" id="s">0</div><div class="u">Sec</div></div>
 </div>
+</div>
+
+<div class="results">
+<h2>Latest Results</h2>
+<div id="resultsList"></div>
 </div>
 
 <div class="upcoming">
@@ -259,10 +265,10 @@ const matches = [
   {home:"Spain", away:"Belgium", stage:"Quarterfinal", venue:"Los Angeles", utc:"2026-07-10T19:00:00Z"},
   {home:"Norway", away:"England", stage:"Quarterfinal", venue:"Miami", utc:"2026-07-11T21:00:00Z"},
   {home:"Argentina", away:"Switzerland", stage:"Quarterfinal", venue:"Kansas City", utc:"2026-07-12T01:00:00Z"},
-{home:"France", away:"Spain", stage:"Semifinal", venue:"Dallas", utc:"2026-07-14T19:00:00Z"},
-{home:"England", away:"Argentina", stage:"Semifinal", venue:"Atlanta", utc:"2026-07-15T19:00:00Z"},
-{home:"3rd Place", away:"", stage:"Bronze Medal Match", venue:"Miami", utc:"2026-07-18T21:00:00Z"},
-{home:"FINAL", away:"", stage:"Final", venue:"New York/New Jersey", utc:"2026-07-19T19:00:00Z"},
+{home:"France", away:"Spain", score:"0–2", stage:"Semifinal", venue:"Dallas", utc:"2026-07-14T19:00:00Z"},
+{home:"England", away:"Argentina", score:"1–2", stage:"Semifinal", venue:"Atlanta", utc:"2026-07-15T19:00:00Z"},
+{home:"France", away:"England", stage:"Bronze Medal Match", venue:"Miami", utc:"2026-07-18T21:00:00Z"},
+{home:"Spain", away:"Argentina", stage:"Final", venue:"New York/New Jersey", utc:"2026-07-19T19:00:00Z"},
 ];
 
 const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -337,6 +343,11 @@ document.getElementById("s").textContent = s;
 }
 
 const now = Date.now();
+const results = matches.filter(x => x.score).slice(-4).reverse();
+document.getElementById("resultsList").innerHTML = results.map(x =>
+`<div class="row"><span class="m">${x.home} v ${x.away}</span><span class="result-score">${x.score}</span></div>`
+).join("") || '<div class="row"><span class="m">No results yet</span></div>';
+
 const list = matches.filter(x => new Date(x.utc).getTime() > now).slice(0,6);
 document.getElementById("list").innerHTML = list.map(x => {
 const label = isKnockout(x) ? x.stage : `${x.home} v ${x.away}`;
