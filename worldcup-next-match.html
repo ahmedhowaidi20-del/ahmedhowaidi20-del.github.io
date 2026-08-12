@@ -103,6 +103,29 @@ font-family:inherit;transition:background .2s, transform .15s;
 .saycard .sc-status.success{color:var(--accent);display:block;}
 .saycard .sc-status.error{color:#ff5d73;display:block;}
 
+/* CHAMPIONS CARD */
+.champ-card{
+background:linear-gradient(160deg,#1c2541,#12183a);
+border-radius:18px;padding:34px 24px;width:100%;max-width:420px;
+box-shadow:0 20px 50px rgba(0,0,0,.5);border:1px solid rgba(255,209,102,.35);
+text-align:center;position:relative;overflow:hidden;
+}
+.champ-card::before{
+content:"";position:absolute;inset:0;
+background:radial-gradient(circle at 50% 0%,rgba(255,209,102,.18),transparent 60%);
+pointer-events:none;
+}
+.champ-trophy{font-size:4rem;line-height:1;margin-bottom:8px;animation:trophyPulse 2.4s ease-in-out infinite;}
+@keyframes trophyPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 6px rgba(255,209,102,.5));}50%{transform:scale(1.08);filter:drop-shadow(0 0 18px rgba(255,209,102,.9));}}
+.champ-label{font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+.champ-name{font-size:2.6rem;font-weight:800;letter-spacing:4px;color:#fff;margin-bottom:12px;
+background:linear-gradient(135deg,#ffd166,#fff,#ffd166);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.champ-score{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+.champ-score span{color:var(--gold);}
+.champ-detail{font-size:.72rem;color:var(--muted);margin-bottom:18px;line-height:1.6;}
+.champ-joke{font-size:1.15rem;color:var(--text);margin-bottom:10px;line-height:1.5;}
+.champ-joke strong{color:#ff5d73;}
+.champ-sub{font-size:.8rem;color:var(--muted);line-height:1.7;}
 </style>
 </head>
 <body>
@@ -111,25 +134,18 @@ font-family:inherit;transition:background .2s, transform .15s;
 <div class="wm-tag">World Cup 2026</div>
 </div>
 
-<h1>FIFA World Cup 2026</h1>
+<h1>FIFA World Cup 2026 · Champions</h1>
 <div class="sub">Canada · Mexico · USA · June 11 – July 19</div>
 <div class="sub" style="color:var(--gold);letter-spacing:2px;margin-top:-18px;">By Ahmed Howaidi & Cristiano Ronaldo</div>
 
-<div class="card" id="card">
-<div class="label" id="cardLabel">Next Match</div>
-<div class="stage" id="stage"></div>
-<div class="teams">
-<div class="team"><div class="name" id="home">—</div></div>
-<div class="vs">VS</div>
-<div class="team"><div class="name" id="away">—</div></div>
-</div>
-<div class="meta" id="meta"></div>
-<div class="countdown" id="cd">
-<div class="unit"><div class="num" id="d">0</div><div class="u">Days</div></div>
-<div class="unit"><div class="num" id="h">0</div><div class="u">Hrs</div></div>
-<div class="unit"><div class="num" id="m">0</div><div class="u">Min</div></div>
-<div class="unit"><div class="num" id="s">0</div><div class="u">Sec</div></div>
-</div>
+<div class="champ-card">
+<div class="champ-trophy">🏆</div>
+<div class="champ-label">Champions of the World</div>
+<div class="champ-name">SPAIN</div>
+<div class="champ-score">Spain <span>1</span> — <span>0</span> Argentina</div>
+<div class="champ-detail">Ferran Torres 106' · New York/New Jersey · 19 July 2026</div>
+<div class="champ-joke">Spain to Messi: <strong>"Not today." 🚫🐐</strong></div>
+<div class="champ-sub">20 shots to 2. La Roja smothered the GOAT's last dance and lifted their second star. 🇪🇸✨</div>
 </div>
 
 <div class="results">
@@ -297,66 +313,32 @@ return null;
 }
 
 function render(){
-const next = findNext();
-if(!next){
-document.getElementById("cardLabel").textContent = "Tournament Complete";
-document.getElementById("stage").textContent = "";
-document.getElementById("home").textContent = "🏆";
-document.getElementById("away").textContent = "";
-document.querySelector(".vs").style.display = "none";
-document.getElementById("meta").textContent = "The FIFA World Cup 2026 has concluded.";
-document.getElementById("cd").style.display = "none";
-document.getElementById("list").innerHTML = "";
-return;
+// Tournament is over — show the road to the trophy (final knockout results).
+const podium = [
+  {home:"Spain", away:"Argentina", tag:"Final", score:"1 – 0"},
+  {home:"France", away:"England", tag:"3rd Place", score:"result"},
+  {home:"France", away:"Spain", tag:"Semi-final", score:"result"},
+  {home:"England", away:"Argentina", tag:"Semi-final", score:"result"},
+];
+const resultsEl = document.getElementById("resultsList");
+if(resultsEl){
+  resultsEl.innerHTML =
+  `<div class="row"><span class="m">🏆 Spain v Argentina</span><span class="result-score">1 – 0</span></div>` +
+  `<div class="row"><span class="m">🥉 France v England</span><span class="result-score">3rd place</span></div>` +
+  `<div class="row"><span class="m">Semi · France v Spain</span><span class="t">Spain won</span></div>` +
+  `<div class="row"><span class="m">Semi · England v Argentina</span><span class="t">Argentina won</span></div>`;
 }
-const m = next.match;
-document.getElementById("stage").textContent = m.stage;
-
-if(isKnockout(m)){
-document.querySelector(".vs").style.display = "none";
-document.getElementById("home").textContent = m.stage;
-document.getElementById("away").textContent = "";
-} else {
-document.querySelector(".vs").style.display = "";
-document.getElementById("home").textContent = m.home;
-document.getElementById("away").textContent = m.away;
+const listEl = document.getElementById("list");
+if(listEl){
+  listEl.innerHTML = '<div class="row"><span class="m">See you in 2030 🇪🇸</span><span class="t">Spain defend</span></div>';
 }
-
-document.getElementById("meta").innerHTML =
-`<strong>${fmt.format(new Date(m.utc))}</strong><br>${m.venue}`;
-
-if(next.live){
-document.getElementById("cardLabel").innerHTML = '<span class="live">● LIVE NOW</span>';
-document.getElementById("cd").style.display = "none";
-} else {
-document.getElementById("cardLabel").textContent = isKnockout(m) ? "Next Up" : "Next Match";
-document.getElementById("cd").style.display = "flex";
-const diff = new Date(m.utc).getTime() - Date.now();
-const d = Math.floor(diff/86400000);
-const h = Math.floor(diff%86400000/3600000);
-const mi = Math.floor(diff%3600000/60000);
-const s = Math.floor(diff%60000/1000);
-document.getElementById("d").textContent = d;
-document.getElementById("h").textContent = h;
-document.getElementById("m").textContent = mi;
-document.getElementById("s").textContent = s;
-}
-
-const now = Date.now();
-const results = matches.filter(x => x.score).slice(-4).reverse();
-document.getElementById("resultsList").innerHTML = results.map(x =>
-`<div class="row"><span class="m">${x.home} v ${x.away}</span><span class="result-score">${x.score}</span></div>`
-).join("") || '<div class="row"><span class="m">No results yet</span></div>';
-
-const list = matches.filter(x => new Date(x.utc).getTime() > now).slice(0,6);
-document.getElementById("list").innerHTML = list.map(x => {
-const label = isKnockout(x) ? x.stage : `${x.home} v ${x.away}`;
-return `<div class="row"><span class="m">${label}</span><span class="t">${fmtShort.format(new Date(x.utc))}</span></div>`;
-}).join("") || '<div class="row"><span class="m">No more fixtures</span></div>';
+const upHead = document.querySelector(".upcoming h2");
+if(upHead) upHead.textContent = "What's Next";
+const resHead = document.querySelector(".results h2");
+if(resHead) resHead.textContent = "How It Ended";
 }
 
 render();
-setInterval(render, 1000);
 
 // ---- SAY SOMETHING BOX ----
 (function() {
