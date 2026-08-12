@@ -160,9 +160,9 @@ nav button.on{color:var(--primary)}
       <label>Session</label>
       <select id="lvSession">
         <option value="full">All sessions – Full day</option>
-        <option value="AM">Morning only (08:00–12:00)</option>
-        <option value="PM">Afternoon only (13:00–16:00)</option>
-        <option value="Evening">Evening only (16:00–18:00)</option>
+        <option value="AM">Morning only (08:30–12:30)</option>
+        <option value="PM">Afternoon only (13:30–16:00)</option>
+        <option value="Evening">Evening only (16:00–20:00)</option>
       </select>
       <label>Reason</label>
       <select id="lvReason">
@@ -434,7 +434,7 @@ const DOCSCHED_EMBED = {"0":{"morning":{"Clinic 1":"Dr. Kariem","Clinic 2":"Dr. 
 
 /* ================= STATE ================= */
 const SESS_LABEL = { AM:'Morning', PM:'Afternoon', Evening:'Evening' };
-const SESS_TIME  = { AM:'08:00–12:00', PM:'13:00–16:00', Evening:'16:00–18:00' };
+const SESS_TIME  = { AM:'08:30–12:30', PM:'13:30–16:00', Evening:'16:00–20:00' };
 const SESS_ORDER = { AM:0, PM:1, Evening:2 };
 let schedules = {};            // monthKey -> schedule data
 let absRows = [];              // rows from shared 'absences' table (doctors + assistants)
@@ -991,7 +991,7 @@ function leaveHours(l){
     const a = m[1].split(':'), b = m[2].split(':');
     return Math.max(0, ((+b[0])*60+(+b[1]) - (+a[0])*60-(+a[1])) / 60);
   }
-  return l.session==='all' ? 8 : (l.session==='morning' ? 4 : (l.session==='afternoon' ? 3 : 2));
+  return l.session==='all' ? 10.5 : (l.session==='morning' ? 4 : (l.session==='afternoon' ? 2.5 : 4));
 }
 function inLogPeriod(iso){
   const t = todayISO();
@@ -1028,7 +1028,7 @@ function renderLeaveLog(){
     if (p.other) parts.push('📝 Other: <b>'+p.other+' d</b>');
     html += '<div class="dayrow"><div class="dhead"><span>'+esc(nm)+'</span></div><div style="font-size:13px;color:var(--muted);margin-top:4px;line-height:1.7">'+parts.join(' · ')+'</div></div>';
   });
-  html += '<div class="section-note">Days counted as working days (Sun–Thu). Permissions without hours count by session (Morning 4h, Afternoon 3h, Evening 2h, full day 8h).</div></div>';
+  html += '<div class="section-note">Days counted as working days (Sun–Thu). Permissions without hours count by session (Morning 4h, Afternoon 2.5h, Evening 4h, full day 10.5h).</div></div>';
   // history
   const hist = groupedLeaves().filter(l => inLogPeriod(l.date_from) || inLogPeriod(l.date_to)).sort((a,b) => a.date_from < b.date_from ? 1 : -1);
   html += '<div class="card"><h2>🗒️ History</h2>' + (hist.length ? hist.map(l =>
