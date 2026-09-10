@@ -17,6 +17,7 @@
   --blue:#1565C0; --blue-dark:#0D47A1;
   --teal:#00796B; --teal-dark:#004D40;
   --grey:#78909C;
+  --purple:#5E35B1; --purple-dark:#4527A0;
   --ink:#1a1a1a; --muted:#667; --bg:#F1F4F8; --card:#fff; --line:#E1E6EC;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -32,16 +33,19 @@ main{max-width:520px;width:100%;margin:0 auto;padding:20px 16px 10px;flex:1}
 .card .icon{width:62px;height:62px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0}
 .card.doctors .icon{background:#E3F2FD}
 .card.assistants .icon{background:#E0F2F1}
+.card.ict .icon{background:#EDE7F6}
 .card.lab .icon{background:#ECEFF1}
 .card h2{font-size:17.5px;font-weight:800;margin-bottom:3px}
 .card.doctors h2{color:var(--blue-dark)}
 .card.assistants h2{color:var(--teal-dark)}
+.card.ict h2{color:var(--purple-dark)}
 .card.lab h2{color:#455A64}
 .card p{font-size:13.5px;color:var(--muted);line-height:1.45}
 .card .go{margin-left:auto;font-size:22px;color:var(--muted);flex-shrink:0}
 .card .tag{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.5px;padding:3px 9px;border-radius:9px;margin-bottom:6px;text-transform:uppercase}
 .card.doctors .tag{background:#E3F2FD;color:var(--blue-dark)}
 .card.assistants .tag{background:#E0F2F1;color:var(--teal-dark)}
+.card.ict .tag{background:#EDE7F6;color:var(--purple-dark)}
 .card.lab .tag{background:#ECEFF1;color:#546E7A}
 .card.lab{opacity:.72;pointer-events:none}
 .card.lab .soon{position:absolute;top:14px;right:-34px;background:var(--grey);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:1px;padding:4px 38px;transform:rotate(38deg)}
@@ -58,6 +62,18 @@ main{max-width:520px;width:100%;margin:0 auto;padding:20px 16px 10px;flex:1}
 </header>
 
 <main>
+  <a class="card ict" href="https://access.kamc.med.sa/" target="_blank" rel="noopener">
+    <div class="row">
+      <div class="icon">🔐</div>
+      <div>
+        <span class="tag">For all staff</span>
+        <h2>KAMC ICT Portal</h2>
+        <p>Remote access to the hospital network &mdash; sign in with your KAMC account to reach internal systems from outside.</p>
+      </div>
+      <div class="go">↗</div>
+    </div>
+  </a>
+
   <a class="card doctors" href="/clinicavailability/">
     <div class="row">
       <div class="icon">🏥</div>
