@@ -44,7 +44,7 @@ color:rgba(255,209,102,.10);text-transform:uppercase;
 transform:rotate(-8deg);user-select:none;
 }
 /* Lift real content above watermark */
-h1,.sub,.card,.upcoming,footer{position:relative;z-index:1;}
+h1,.sub,.card,.upcoming,.results,footer{position:relative;z-index:1;}
 h1{font-size:1.1rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;text-align:center;}
 .sub{color:var(--muted);font-size:.8rem;margin-bottom:24px;text-align:center;}
 .card{
@@ -64,8 +64,9 @@ border:1px solid rgba(91,192,190,.2);
 .unit{background:rgba(91,192,190,.12);border-radius:10px;padding:10px 12px;min-width:62px;text-align:center;}
 .unit .num{font-size:1.6rem;font-weight:700;color:var(--gold);}
 .unit .u{font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
-.upcoming{margin-top:26px;width:100%;max-width:420px;}
-.upcoming h2{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;text-align:center;}
+.upcoming,.results{margin-top:26px;width:100%;max-width:420px;}
+.upcoming h2,.results h2{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;text-align:center;}
+.result-score{color:var(--gold);font-weight:700;white-space:nowrap;}
 .row{display:flex;justify-content:space-between;padding:9px 12px;border-radius:8px;font-size:.82rem;gap:8px;}
 .row:nth-child(odd){background:rgba(255,255,255,.03);}
 .row .m{color:var(--text);}
@@ -102,6 +103,29 @@ font-family:inherit;transition:background .2s, transform .15s;
 .saycard .sc-status.success{color:var(--accent);display:block;}
 .saycard .sc-status.error{color:#ff5d73;display:block;}
 
+/* CHAMPIONS CARD */
+.champ-card{
+background:linear-gradient(160deg,#1c2541,#12183a);
+border-radius:18px;padding:34px 24px;width:100%;max-width:420px;
+box-shadow:0 20px 50px rgba(0,0,0,.5);border:1px solid rgba(255,209,102,.35);
+text-align:center;position:relative;overflow:hidden;
+}
+.champ-card::before{
+content:"";position:absolute;inset:0;
+background:radial-gradient(circle at 50% 0%,rgba(255,209,102,.18),transparent 60%);
+pointer-events:none;
+}
+.champ-trophy{font-size:4rem;line-height:1;margin-bottom:8px;animation:trophyPulse 2.4s ease-in-out infinite;}
+@keyframes trophyPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 6px rgba(255,209,102,.5));}50%{transform:scale(1.08);filter:drop-shadow(0 0 18px rgba(255,209,102,.9));}}
+.champ-label{font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+.champ-name{font-size:2.6rem;font-weight:800;letter-spacing:4px;color:#fff;margin-bottom:12px;
+background:linear-gradient(135deg,#ffd166,#fff,#ffd166);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.champ-score{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+.champ-score span{color:var(--gold);}
+.champ-detail{font-size:.72rem;color:var(--muted);margin-bottom:18px;line-height:1.6;}
+.champ-joke{font-size:1.15rem;color:var(--text);margin-bottom:10px;line-height:1.5;}
+.champ-joke strong{color:#ff5d73;}
+.champ-sub{font-size:.8rem;color:var(--muted);line-height:1.7;}
 </style>
 </head>
 <body>
@@ -110,25 +134,23 @@ font-family:inherit;transition:background .2s, transform .15s;
 <div class="wm-tag">World Cup 2026</div>
 </div>
 
-<h1>FIFA World Cup 2026</h1>
+<h1>FIFA World Cup 2026 · Champions</h1>
 <div class="sub">Canada · Mexico · USA · June 11 – July 19</div>
 <div class="sub" style="color:var(--gold);letter-spacing:2px;margin-top:-18px;">By Ahmed Howaidi & Cristiano Ronaldo</div>
 
-<div class="card" id="card">
-<div class="label" id="cardLabel">Next Match</div>
-<div class="stage" id="stage"></div>
-<div class="teams">
-<div class="team"><div class="name" id="home">—</div></div>
-<div class="vs">VS</div>
-<div class="team"><div class="name" id="away">—</div></div>
+<div class="champ-card">
+<div class="champ-trophy">🏆</div>
+<div class="champ-label">Champions of the World</div>
+<div class="champ-name">SPAIN</div>
+<div class="champ-score">Spain <span>1</span> — <span>0</span> Argentina</div>
+<div class="champ-detail">Ferran Torres 106' · New York/New Jersey · 19 July 2026</div>
+<div class="champ-joke">Spain to Messi: <strong>"Not today." 🚫🐐</strong></div>
+<div class="champ-sub">20 shots to 2. La Roja smothered the GOAT's last dance and lifted their second star. 🇪🇸✨</div>
 </div>
-<div class="meta" id="meta"></div>
-<div class="countdown" id="cd">
-<div class="unit"><div class="num" id="d">0</div><div class="u">Days</div></div>
-<div class="unit"><div class="num" id="h">0</div><div class="u">Hrs</div></div>
-<div class="unit"><div class="num" id="m">0</div><div class="u">Min</div></div>
-<div class="unit"><div class="num" id="s">0</div><div class="u">Sec</div></div>
-</div>
+
+<div class="results">
+<h2>Latest Results</h2>
+<div id="resultsList"></div>
 </div>
 
 <div class="upcoming">
@@ -247,22 +269,22 @@ const matches = [
   {home:"Australia", away:"Egypt", stage:"Round of 32", venue:"Dallas", utc:"2026-07-03T17:00:00Z"},
   {home:"Argentina", away:"Cape Verde", stage:"Round of 32", venue:"Miami", utc:"2026-07-03T21:00:00Z"},
   {home:"Colombia", away:"Ghana", stage:"Round of 32", venue:"Kansas City", utc:"2026-07-04T01:30:00Z"},
-{home:"R16", away:"", stage:"Round of 16", venue:"Houston", utc:"2026-07-04T19:00:00Z"},
-{home:"R16", away:"", stage:"Round of 16", venue:"Philadelphia", utc:"2026-07-04T22:00:00Z"},
-{home:"R16", away:"", stage:"Round of 16", venue:"New York/New Jersey", utc:"2026-07-05T21:00:00Z"},
-{home:"R16", away:"", stage:"Round of 16", venue:"Mexico City", utc:"2026-07-06T02:00:00Z"},
-{home:"R16", away:"", stage:"Round of 16", venue:"Dallas", utc:"2026-07-06T21:00:00Z"},
-{home:"R16", away:"", stage:"Round of 16", venue:"Seattle", utc:"2026-07-07T04:00:00Z"},
-{home:"R16", away:"", stage:"Round of 16", venue:"Atlanta", utc:"2026-07-07T17:00:00Z"},
-{home:"R16", away:"", stage:"Round of 16", venue:"Vancouver", utc:"2026-07-08T00:00:00Z"},
-{home:"QF", away:"", stage:"Quarterfinal", venue:"Boston", utc:"2026-07-09T21:00:00Z"},
-{home:"QF", away:"", stage:"Quarterfinal", venue:"Los Angeles", utc:"2026-07-10T23:00:00Z"},
-{home:"QF", away:"", stage:"Quarterfinal", venue:"Miami", utc:"2026-07-11T22:00:00Z"},
-{home:"QF", away:"", stage:"Quarterfinal", venue:"Kansas City", utc:"2026-07-12T03:00:00Z"},
-{home:"SF", away:"", stage:"Semifinal", venue:"Dallas", utc:"2026-07-14T21:00:00Z"},
-{home:"SF", away:"", stage:"Semifinal", venue:"Atlanta", utc:"2026-07-15T20:00:00Z"},
-{home:"3rd Place", away:"", stage:"Bronze Medal Match", venue:"Miami", utc:"2026-07-18T22:00:00Z"},
-{home:"FINAL", away:"", stage:"Final", venue:"New York/New Jersey", utc:"2026-07-19T20:00:00Z"},
+  {home:"Canada", away:"Morocco", stage:"Round of 16", venue:"Houston", utc:"2026-07-04T17:00:00Z"},
+  {home:"Paraguay", away:"France", stage:"Round of 16", venue:"Philadelphia", utc:"2026-07-04T21:00:00Z"},
+  {home:"Brazil", away:"Norway", stage:"Round of 16", venue:"New York/New Jersey", utc:"2026-07-05T16:00:00Z"},
+  {home:"Mexico", away:"England", stage:"Round of 16", venue:"Mexico City", utc:"2026-07-06T00:00:00Z"},
+  {home:"Portugal", away:"Spain", stage:"Round of 16", venue:"Dallas", utc:"2026-07-06T19:00:00Z"},
+  {home:"USA", away:"Belgium", stage:"Round of 16", venue:"Seattle", utc:"2026-07-07T00:00:00Z"},
+  {home:"Argentina", away:"Egypt", stage:"Round of 16", venue:"Atlanta", utc:"2026-07-07T16:00:00Z"},
+  {home:"Switzerland", away:"Colombia", stage:"Round of 16", venue:"Vancouver", utc:"2026-07-07T20:00:00Z"},
+  {home:"France", away:"Morocco", stage:"Quarterfinal", venue:"Boston", utc:"2026-07-09T20:00:00Z"},
+  {home:"Spain", away:"Belgium", stage:"Quarterfinal", venue:"Los Angeles", utc:"2026-07-10T19:00:00Z"},
+  {home:"Norway", away:"England", stage:"Quarterfinal", venue:"Miami", utc:"2026-07-11T21:00:00Z"},
+  {home:"Argentina", away:"Switzerland", stage:"Quarterfinal", venue:"Kansas City", utc:"2026-07-12T01:00:00Z"},
+{home:"France", away:"Spain", score:"0–2", stage:"Semifinal", venue:"Dallas", utc:"2026-07-14T19:00:00Z"},
+{home:"England", away:"Argentina", score:"1–2", stage:"Semifinal", venue:"Atlanta", utc:"2026-07-15T19:00:00Z"},
+{home:"France", away:"England", stage:"Bronze Medal Match", venue:"Miami", utc:"2026-07-18T21:00:00Z"},
+{home:"Spain", away:"Argentina", stage:"Final", venue:"New York/New Jersey", utc:"2026-07-19T19:00:00Z"},
 ];
 
 const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -291,61 +313,32 @@ return null;
 }
 
 function render(){
-const next = findNext();
-if(!next){
-document.getElementById("cardLabel").textContent = "Tournament Complete";
-document.getElementById("stage").textContent = "";
-document.getElementById("home").textContent = "🏆";
-document.getElementById("away").textContent = "";
-document.querySelector(".vs").style.display = "none";
-document.getElementById("meta").textContent = "The FIFA World Cup 2026 has concluded.";
-document.getElementById("cd").style.display = "none";
-document.getElementById("list").innerHTML = "";
-return;
+// Tournament is over — show the road to the trophy (final knockout results).
+const podium = [
+  {home:"Spain", away:"Argentina", tag:"Final", score:"1 – 0"},
+  {home:"France", away:"England", tag:"3rd Place", score:"result"},
+  {home:"France", away:"Spain", tag:"Semi-final", score:"result"},
+  {home:"England", away:"Argentina", tag:"Semi-final", score:"result"},
+];
+const resultsEl = document.getElementById("resultsList");
+if(resultsEl){
+  resultsEl.innerHTML =
+  `<div class="row"><span class="m">🏆 Spain v Argentina</span><span class="result-score">1 – 0</span></div>` +
+  `<div class="row"><span class="m">🥉 France v England</span><span class="result-score">3rd place</span></div>` +
+  `<div class="row"><span class="m">Semi · France v Spain</span><span class="t">Spain won</span></div>` +
+  `<div class="row"><span class="m">Semi · England v Argentina</span><span class="t">Argentina won</span></div>`;
 }
-const m = next.match;
-document.getElementById("stage").textContent = m.stage;
-
-if(isKnockout(m)){
-document.querySelector(".vs").style.display = "none";
-document.getElementById("home").textContent = m.stage;
-document.getElementById("away").textContent = "";
-} else {
-document.querySelector(".vs").style.display = "";
-document.getElementById("home").textContent = m.home;
-document.getElementById("away").textContent = m.away;
+const listEl = document.getElementById("list");
+if(listEl){
+  listEl.innerHTML = '<div class="row"><span class="m">See you in 2030 🇪🇸</span><span class="t">Spain defend</span></div>';
 }
-
-document.getElementById("meta").innerHTML =
-`<strong>${fmt.format(new Date(m.utc))}</strong><br>${m.venue}`;
-
-if(next.live){
-document.getElementById("cardLabel").innerHTML = '<span class="live">● LIVE NOW</span>';
-document.getElementById("cd").style.display = "none";
-} else {
-document.getElementById("cardLabel").textContent = isKnockout(m) ? "Next Up" : "Next Match";
-document.getElementById("cd").style.display = "flex";
-const diff = new Date(m.utc).getTime() - Date.now();
-const d = Math.floor(diff/86400000);
-const h = Math.floor(diff%86400000/3600000);
-const mi = Math.floor(diff%3600000/60000);
-const s = Math.floor(diff%60000/1000);
-document.getElementById("d").textContent = d;
-document.getElementById("h").textContent = h;
-document.getElementById("m").textContent = mi;
-document.getElementById("s").textContent = s;
-}
-
-const now = Date.now();
-const list = matches.filter(x => new Date(x.utc).getTime() > now).slice(0,6);
-document.getElementById("list").innerHTML = list.map(x => {
-const label = isKnockout(x) ? x.stage : `${x.home} v ${x.away}`;
-return `<div class="row"><span class="m">${label}</span><span class="t">${fmtShort.format(new Date(x.utc))}</span></div>`;
-}).join("") || '<div class="row"><span class="m">No more fixtures</span></div>';
+const upHead = document.querySelector(".upcoming h2");
+if(upHead) upHead.textContent = "What's Next";
+const resHead = document.querySelector(".results h2");
+if(resHead) resHead.textContent = "How It Ended";
 }
 
 render();
-setInterval(render, 1000);
 
 // ---- SAY SOMETHING BOX ----
 (function() {
