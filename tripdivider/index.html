@@ -1,18 +1,20 @@
 <!doctype html>
 <html lang="en">
-<title>TripDivider</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1e3a5f">
+<title>TripDivider</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{
+  color-scheme:light;
   --ground:#eef1f4; --surface:#ffffff; --surface-2:#f3f5f8;
   --ink:#16222f; --ink-2:#4a5a6b; --ink-3:#7b8a99;
   --line:#dde3e9; --navy:#1e3a5f; --on-navy:#ffffff; --tag:#f2b705; --tag-ink:#3a2c00;
-  --owe:#b83a3a; --owe-bg:#fbeaea; --get:#23744a; --get-bg:#e3f2e8;
+  --owe:#b83a3a; --owe-bg:#fbeaea; --get:#23744a; --get-bg:#e3f2e8; --warn:#9a6700; --warn-bg:#fdf3d7;
   --focus:#2d6cdf; --scrim:rgba(14,22,31,.45); --shadow:0 8px 28px rgba(20,34,50,.18);
   --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
   --body:"Instrument Sans","Segoe UI",system-ui,sans-serif;
@@ -25,6 +27,7 @@
     --ground:#0f161e; --surface:#17212c; --surface-2:#1f2b38;
     --ink:#e8eef4; --ink-2:#a9b7c5; --ink-3:#7c8e9f; --line:#2a3a4a;
     --navy:#9cc0ea; --on-navy:#0f1a26; --owe:#ef8a8a; --owe-bg:#3a1f22; --get:#7fd3a2; --get-bg:#173226;
+    --warn:#f0c85a; --warn-bg:#3a2f12;
     --focus:#7aa7ff; --scrim:rgba(0,0,0,.6); --shadow:0 8px 28px rgba(0,0,0,.5);
   }
 }
@@ -33,6 +36,7 @@
   --ground:#0f161e; --surface:#17212c; --surface-2:#1f2b38;
   --ink:#e8eef4; --ink-2:#a9b7c5; --ink-3:#7c8e9f; --line:#2a3a4a;
   --navy:#9cc0ea; --on-navy:#0f1a26; --owe:#ef8a8a; --owe-bg:#3a1f22; --get:#7fd3a2; --get-bg:#173226;
+  --warn:#f0c85a; --warn-bg:#3a2f12;
   --focus:#7aa7ff; --scrim:rgba(0,0,0,.6); --shadow:0 8px 28px rgba(0,0,0,.5);
 }
 
@@ -40,49 +44,90 @@
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0}
+:root{padding-top:env(safe-area-inset-top,0px)}
 body{background:var(--ground);color:var(--ink);font:16px/1.45 var(--body);
   padding:0 16px calc(var(--nav-h) + 96px + env(safe-area-inset-bottom,0px));-webkit-tap-highlight-color:transparent}
+body[data-screen="home"]{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
 body.noscroll{overflow:hidden}
 h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.muted{color:var(--ink-3)}
-
 .app{max-width:1120px;margin:0 auto}
+.screen{display:none}
+body[data-screen="home"] #home, body[data-screen="trip"] #trip{display:block}
+body[data-screen="home"] .nav, body[data-screen="home"] .fab{display:none}
 
 /* Header */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ground);
-  display:flex;align-items:center;gap:12px;padding-block:12px;margin-inline:-16px;padding-inline:16px}
+  display:flex;align-items:center;gap:10px;padding-block:12px;margin-inline:-16px;padding-inline:16px}
 .tag{flex:none;position:relative;background:var(--tag);color:var(--tag-ink);font-family:var(--display);font-weight:800;
   font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px 5px 22px;border-radius:4px 10px 10px 4px}
 .tag::before{content:"";position:absolute;left:8px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:var(--ground)}
-.top h1{font-size:22px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.top h1{font-size:22px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
+.back{flex:none;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
+.back svg{width:20px;height:20px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.sync{flex:none;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-3);white-space:nowrap}
+.sync::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--get)}
+.sync[data-state="saving"]::before{background:var(--tag)}
+.sync[data-state="offline"]{color:var(--warn)} .sync[data-state="offline"]::before{background:var(--warn)}
+.sync[data-state="error"]{color:var(--owe)} .sync[data-state="error"]::before{background:var(--owe)}
 
-.example-note{background:var(--surface);border:1px dashed var(--ink-3);border-radius:12px;padding:12px 14px;
-  display:grid;gap:10px;color:var(--ink-2);font-size:14px;margin-bottom:14px}
+/* Home */
+.home-hero{display:grid;gap:14px;padding-block:8px 18px}
+.home-hero p{margin:0;color:var(--ink-2);max-width:40ch}
+.add-trip{min-height:56px;font-size:17px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:10px}
+.add-trip svg{width:22px;height:22px;stroke:currentColor;stroke-width:2.4;fill:none;stroke-linecap:round}
+.home-actions{display:grid;gap:10px}
+.pw{display:flex;align-items:center;gap:8px}
+.pw input{flex:1 1 auto}
+.pw .linkish{flex:none;min-width:48px}
+input[type=password]{width:100%;min-width:0;min-height:48px;font-size:16px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.readonly{min-height:48px;display:flex;align-items:center;padding:10px 12px;border-radius:12px;background:var(--surface-2);font-weight:600;overflow-wrap:anywhere}
+.section-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin:6px 4px 10px}
+.trips{display:grid;gap:10px}
+.trip-card{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;width:100%;text-align:left;
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
+.trip-card:hover{border-color:var(--ink-3)}
+.trip-icon{width:46px;height:46px;border-radius:12px;background:var(--tag);color:var(--tag-ink);display:grid;place-items:center;
+  font-family:var(--display);font-weight:800;font-size:20px}
+.trip-card .n{font-family:var(--display);font-weight:700;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trip-card .m{font-size:13px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trip-card .t{font-family:var(--mono);font-weight:600;text-align:right;font-size:15px}
+.trip-card .t small{display:block;font-family:var(--body);font-weight:600;font-size:11px;color:var(--warn)}
+.home-empty{background:var(--surface);border:1px dashed var(--ink-3);border-radius:16px;padding:28px 18px;text-align:center;color:var(--ink-2)}
+.home-empty strong{display:block;font-family:var(--display);font-size:19px;color:var(--ink);margin-bottom:4px}
+.banner{border-radius:12px;padding:12px 14px;font-size:14px;margin-bottom:14px;background:var(--warn-bg);color:var(--warn);font-weight:500}
+.banner code{font-family:var(--mono);font-size:13px}
+
+/* Stepper */
+.steps{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px;display:grid;gap:12px}
+.step-track{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.step{display:grid;gap:6px;font-size:12px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.step::before{content:"";height:5px;border-radius:3px;background:var(--line)}
+.step.done{color:var(--get)} .step.done::before{background:var(--get)}
+.step.cur{color:var(--navy)} .step.cur::before{background:var(--navy)}
+.step-body{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.step-body p{margin:0;color:var(--ink-2);font-size:15px;flex:1 1 200px}
 
 /* Views */
-.views{display:block}
 .view{display:none;gap:14px}
 body[data-tab="balances"] #view-balances,
 body[data-tab="payments"] #view-payments,
 body[data-tab="people"] #view-people{display:grid}
-
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
 .panel-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:12px}
 .panel-h h2{font-size:18px;font-weight:700}
 .panel-h small{font-size:13px;color:var(--ink-3)}
 
-/* Hero total */
 .hero{background:var(--navy);color:var(--on-navy);border-radius:18px;padding:18px;display:grid;gap:14px}
 .hero .k{font-size:12px;text-transform:uppercase;letter-spacing:.1em;opacity:.75}
 .hero .big{font-family:var(--mono);font-size:clamp(28px,9vw,40px);font-weight:600;line-height:1.1;margin-top:2px;overflow-wrap:anywhere}
-.hero-stats{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:18px;gap:8px;border-top:1px solid color-mix(in srgb,var(--on-navy) 22%,transparent);padding-top:12px}
+.hero-stats{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:18px;border-top:1px solid color-mix(in srgb,var(--on-navy) 22%,transparent);padding-top:12px}
 .hero-stats .v{font-family:var(--mono);font-weight:600;font-size:15px;overflow-wrap:anywhere}
 
-/* Balances */
 .bal{display:grid;gap:14px}
 .bal-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center}
 .bal-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -95,11 +140,9 @@ body[data-tab="people"] #view-people{display:grid}
 .pill.owe{background:var(--owe-bg);color:var(--owe)}
 .pill.get{background:var(--get-bg);color:var(--get)}
 .pill.even{background:var(--surface-2);color:var(--ink-3)}
-
 .avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:14px;font-weight:700;color:#fff;flex:none}
 .avatar.sm{width:26px;height:26px;font-size:11px}
 
-/* Settle */
 .settle{display:grid;gap:10px}
 .transfer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px}
 .transfer .who{display:flex;align-items:center;gap:6px;min-width:0}
@@ -108,8 +151,8 @@ body[data-tab="people"] #view-people{display:grid}
 .transfer .amt{font-family:var(--mono);font-weight:600;font-size:17px;grid-column:1}
 .transfer .btn{grid-column:2;grid-row:1 / span 2;align-self:center}
 .done{padding:16px;border-radius:12px;background:var(--get-bg);color:var(--get);font-weight:600;text-align:center}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 
-/* Buttons & fields */
 .btn{min-height:44px;border:1px solid var(--line);background:var(--surface-2);border-radius:12px;padding:10px 16px;font-weight:600;white-space:nowrap}
 .btn:active{transform:scale(.98)}
 .btn.primary{background:var(--navy);border-color:var(--navy);color:var(--on-navy)}
@@ -126,8 +169,8 @@ input:focus,select:focus{border-color:var(--focus);outline:none}
 .err:empty{display:none}
 .row{display:flex;gap:10px}
 .row > *{flex:1 1 0;min-width:0}
+.hint{font-size:13px;color:var(--ink-3);margin:0}
 
-/* Payments list */
 .toolbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,140px);gap:8px}
 .day{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);padding:6px 4px 0}
 .plist{display:grid;gap:8px}
@@ -141,14 +184,11 @@ button.pay:hover{border-color:var(--ink-3)}
 .pay.settlement .desc{color:var(--get)}
 .empty{color:var(--ink-3);padding:24px 8px;text-align:center}
 
-/* People */
 .people{display:grid;gap:8px}
 .person{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:6px 0}
 .person .n{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .person .s{font-size:13px;color:var(--ink-3)}
-.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px}
 
-/* Bottom nav */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
   display:grid;grid-template-columns:repeat(3,1fr);padding-bottom:env(safe-area-inset-bottom,0px)}
 .nav button{height:var(--nav-h);border:0;background:transparent;display:grid;place-items:center;align-content:center;gap:3px;
@@ -156,18 +196,16 @@ button.pay:hover{border-color:var(--ink-3)}
 .nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .nav button[aria-current="page"]{color:var(--navy)}
 .nav button[aria-current="page"] svg{stroke-width:2.3}
-
 .fab{position:fixed;right:16px;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom,0px));z-index:21;
   height:58px;min-width:58px;border-radius:18px;border:0;background:var(--tag);color:var(--tag-ink);box-shadow:var(--shadow);
   display:flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;font-weight:700;font-size:16px}
 .fab svg{width:24px;height:24px;stroke:currentColor;stroke-width:2.4;fill:none;stroke-linecap:round}
 .fab .fab-label{display:none}
 
-/* Bottom sheet */
 .scrim{position:fixed;inset:0;background:var(--scrim);z-index:30}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;background:var(--surface);border-radius:22px 22px 0 0;
   max-height:calc(100% - 24px - env(safe-area-inset-top,0px));display:flex;flex-direction:column;box-shadow:var(--shadow)}
-.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px 8px;border-bottom:1px solid var(--line)}
+.sheet-h{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px 8px;border-bottom:1px solid var(--line)}
 .sheet-h::before{content:"";position:absolute;left:50%;top:6px;width:40px;height:4px;margin-left:-20px;border-radius:2px;background:var(--line)}
 .sheet-h h2{font-size:19px;padding-top:6px}
 .sheet-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:16px;display:grid;gap:16px;overscroll-behavior:contain}
@@ -176,9 +214,8 @@ button.pay:hover{border-color:var(--ink-3)}
   .sheet{animation:up .22s cubic-bezier(.2,.8,.3,1)} @keyframes up{from{transform:translateY(100%)}}
   .scrim{animation:fade .2s} @keyframes fade{from{opacity:0}}
 }
-.amount-in{font-family:var(--mono);font-size:30px !important;font-weight:600;min-height:64px !important;text-align:left}
+.amount-in{font-family:var(--mono);font-size:30px !important;font-weight:600;min-height:64px !important}
 
-/* Payer chips (radio) */
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{position:relative}
 .chip input{position:absolute;opacity:0;pointer-events:none}
@@ -187,7 +224,6 @@ button.pay:hover{border-color:var(--ink-3)}
 .chip input:checked + span{background:var(--navy);border-color:var(--navy);color:var(--on-navy)}
 .chip input:focus-visible + span{outline:2px solid var(--focus);outline-offset:2px}
 
-/* Split list */
 .split-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .seg button{border:0;background:transparent;min-height:36px;padding:4px 12px;font-size:14px;font-weight:600;color:var(--ink-2)}
@@ -206,24 +242,27 @@ button.pay:hover{border-color:var(--ink-3)}
 .toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
   background:var(--ink);color:var(--ground);padding:10px 16px;border-radius:12px;font-weight:600;box-shadow:var(--shadow);z-index:40;
   max-width:calc(100% - 32px);text-align:center}
+body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 @media (prefers-reduced-motion:no-preference){.toast{animation:pop .2s ease-out}@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}}
 .foot-note{color:var(--ink-3);font-size:12px;text-align:center;padding-top:8px}
+.foot-note a{color:inherit}
 
-/* ---------- Larger screens: enhance ---------- */
+/* ---------- Larger screens ---------- */
 @media (min-width:600px){
-  .example-note{grid-template-columns:1fr auto;align-items:center}
   .sheet{left:50%;right:auto;bottom:auto;top:50%;width:min(520px,calc(100% - 32px));transform:translate(-50%,-50%);border-radius:20px;max-height:calc(100% - 48px)}
   .sheet-h::before{display:none}
   @media (prefers-reduced-motion:no-preference){ .sheet{animation:pop2 .2s ease-out} @keyframes pop2{from{opacity:0;transform:translate(-50%,-46%)}} }
   .sheet-foot{padding-bottom:12px}
+  #home{max-width:680px;margin:0 auto}
+  .home-actions{grid-template-columns:auto auto;justify-content:start}
+  .add-trip{padding-inline:28px}
 }
 @media (min-width:960px){
   body{padding-bottom:48px}
   .top{position:static;padding-block:24px 18px}
-  .top h1{font-size:34px}
-  .top .fab-slot{margin-left:auto}
+  .top h1{font-size:32px}
   .nav{display:none}
-  .fab{position:static;box-shadow:none;height:48px;border-radius:12px}
+  .fab{position:static;box-shadow:none;height:44px;border-radius:12px}
   .fab .fab-label{display:inline}
   .toast{bottom:24px}
   .views{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"bal pay" "ppl pay";gap:20px;align-items:start}
@@ -231,83 +270,112 @@ button.pay:hover{border-color:var(--ink-3)}
   #view-balances{grid-area:bal} #view-payments{grid-area:pay} #view-people{grid-area:ppl}
 }
 </style>
-
+</head>
+<body data-screen="home" data-tab="people">
 <div class="app">
-  <header class="top">
-    <span class="tag">TripDivider</span>
-    <h1 id="tripTitle">My Trip</h1>
-    <div class="fab-slot">
+
+  <!-- ============ HOME: My trips ============ -->
+  <section class="screen" id="home">
+    <header class="top">
+      <span class="tag">TripDivider</span>
+      <h1>My trips</h1>
+    </header>
+    <div class="banner" id="cloudBanner" hidden></div>
+    <div class="home-hero">
+      <p>Create a trip, add who's coming, log every payment. TripDivider works out who owes whom.</p>
+      <div class="home-actions">
+        <button class="btn primary add-trip" id="addTripBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add trip</button>
+        <button class="btn add-trip" id="joinTripBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/></svg>Join a trip</button>
+      </div>
+    </div>
+    <div class="section-label" id="tripsLabel" hidden>Your trips on this phone</div>
+    <div class="trips" id="tripList"></div>
+    <p class="foot-note">Each trip is protected by its name and password. Only share them with the friends on the trip. · <a href="https://ahmedhowaidi.com/">ahmedhowaidi.com</a></p>
+  </section>
+
+  <!-- ============ TRIP ============ -->
+  <section class="screen" id="trip">
+    <header class="top">
+      <button class="back" id="backBtn" type="button" aria-label="Back to my trips">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <h1 id="tripTitle">Trip</h1>
+      <span class="sync" id="sync" data-state="saved" role="status">Saved</span>
       <button class="fab" id="fab" type="button" aria-label="Add a payment">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="fab-label">Add payment</span>
       </button>
+    </header>
+
+    <div class="steps" id="steps" hidden>
+      <div class="step-track">
+        <div class="step done">1 · Trip</div>
+        <div class="step" id="step2">2 · Friends</div>
+        <div class="step" id="step3">3 · Payments</div>
+      </div>
+      <div class="step-body"><p id="stepHint"></p><button class="btn primary sm" type="button" id="stepAction"></button></div>
     </div>
-  </header>
 
-  <div class="example-note" id="exampleNote" hidden>
-    <span>This is an example trip. Look around, then clear it to start your own.</span>
-    <button class="btn primary sm" id="clearExample" type="button">Start my own trip</button>
-  </div>
-
-  <main class="views">
-    <!-- Balances -->
-    <section class="view" id="view-balances" aria-label="Balances">
-      <div class="hero">
-        <div><div class="k">Total spent</div><div class="big" id="sTotal">0</div></div>
-        <div class="hero-stats">
-          <div><div class="k">People</div><div class="v" id="sFriends">0</div></div>
-          <div><div class="k">Per person</div><div class="v" id="sAvg">0</div></div>
-          <div><div class="k">Payments</div><div class="v" id="sCount">0</div></div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-h"><h2>Settle up</h2><small id="settleCount"></small></div>
-        <div class="settle" id="settle"></div>
-        <button class="btn block" id="copySummary" type="button" style="margin-top:12px">Copy summary to share</button>
-      </div>
-
-      <div class="panel">
-        <div class="panel-h"><h2>Balances</h2><small>paid − share</small></div>
-        <div class="bal" id="balances"></div>
-      </div>
-    </section>
-
-    <!-- Payments -->
-    <section class="view" id="view-payments" aria-label="Payments">
-      <div class="panel" style="padding:12px">
-        <div class="toolbar">
-          <input id="search" type="search" placeholder="Search" aria-label="Search payments" style="min-height:44px;font-size:16px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;width:100%">
-          <select id="filterPerson" aria-label="Filter by person" style="min-height:44px"></select>
-        </div>
-      </div>
-      <div class="plist" id="ledger"></div>
-    </section>
-
-    <!-- People -->
-    <section class="view" id="view-people" aria-label="People and trip settings">
-      <div class="panel">
-        <div class="panel-h"><h2>People</h2><small id="friendCount"></small></div>
-        <form id="friendForm" autocomplete="off" style="display:grid;gap:8px">
-          <div class="row">
-            <input id="friendName" type="text" placeholder="Add a friend's name" maxlength="24" aria-label="Friend name" enterkeyhint="done" style="flex:1 1 auto">
-            <button class="btn primary" type="submit" style="flex:0 0 auto">Add</button>
+    <main class="views">
+      <section class="view" id="view-balances" aria-label="Settle up">
+        <div class="hero">
+          <div><div class="k">Total spent</div><div class="big" id="sTotal">0</div></div>
+          <div class="hero-stats">
+            <div><div class="k">People</div><div class="v" id="sFriends">0</div></div>
+            <div><div class="k">Per person</div><div class="v" id="sAvg">0</div></div>
+            <div><div class="k">Payments</div><div class="v" id="sCount">0</div></div>
           </div>
-          <div class="err" id="friendErr"></div>
-        </form>
-        <div class="people" id="friends" style="margin-top:8px"></div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-h"><h2>Trip</h2></div>
-        <div style="display:grid;gap:14px">
-          <label class="field"><span class="label">Trip name</span><input id="tripName" type="text" maxlength="40"></label>
-          <label class="field"><span class="label">Currency</span><select id="currency"></select></label>
-          <div id="resetArea"><button class="btn block danger" id="resetBtn" type="button">Erase and start a new trip</button></div>
         </div>
-      </div>
-      <p class="foot-note">Saved in this browser on this device only. · <a href="https://ahmedhowaidi.com/" style="color:inherit">ahmedhowaidi.com</a></p>
-    </section>
-  </main>
+        <div class="panel">
+          <div class="panel-h"><h2>Settle up</h2><small id="settleCount"></small></div>
+          <div class="settle" id="settle"></div>
+          <div class="actions">
+            <button class="btn" id="exportBtn" type="button">Export to Excel</button>
+            <button class="btn" id="copySummary" type="button">Copy summary</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h2>Balances</h2><small>paid − share</small></div>
+          <div class="bal" id="balances"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-payments" aria-label="Payments">
+        <div class="panel" style="padding:12px">
+          <div class="toolbar">
+            <input id="search" type="search" placeholder="Search" aria-label="Search payments">
+            <select id="filterPerson" aria-label="Filter by person"></select>
+          </div>
+        </div>
+        <div class="plist" id="ledger"></div>
+      </section>
+
+      <section class="view" id="view-people" aria-label="People and trip settings">
+        <div class="panel">
+          <div class="panel-h"><h2>Friends on this trip</h2><small id="friendCount"></small></div>
+          <form id="friendForm" autocomplete="off" style="display:grid;gap:8px">
+            <div class="row">
+              <input id="friendName" type="text" placeholder="Friend's name" maxlength="24" aria-label="Friend name" enterkeyhint="done" style="flex:1 1 auto">
+              <button class="btn primary" type="submit" style="flex:0 0 auto">Add</button>
+            </div>
+            <div class="err" id="friendErr"></div>
+          </form>
+          <div class="people" id="friends" style="margin-top:8px"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h2>Trip settings</h2></div>
+          <div style="display:grid;gap:14px">
+            <div class="field"><span class="label">Trip name (used to join)</span><div class="readonly" id="tripNameRO"></div></div>
+            <label class="field"><span class="label">Currency</span><select id="currency"></select></label>
+            <button class="btn block" id="shareBtn" type="button">Invite friends</button>
+            <p class="hint">Sends the link and trip name. Give the password to your friends yourself.</p>
+            <div id="pwArea"></div>
+            <div id="deleteArea"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </section>
 </div>
 
 <nav class="nav" aria-label="Sections">
@@ -316,22 +384,60 @@ button.pay:hover{border-color:var(--ink-3)}
   <button type="button" data-tab="payments">
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>Payments</button>
   <button type="button" data-tab="people">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c2.4.1 4 1.7 4.5 4.8"/></svg>People</button>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c2.4.1 4 1.7 4.5 4.8"/></svg>Friends</button>
 </nav>
 
-<!-- Add / edit payment sheet -->
 <div class="scrim" id="scrim" hidden></div>
+
+<!-- New trip sheet -->
+<div class="sheet" id="tripSheet" role="dialog" aria-modal="true" aria-labelledby="tripSheetTitle" hidden>
+  <div class="sheet-h"><h2 id="tripSheetTitle">New trip</h2><button class="btn ghost sm" type="button" data-close>Cancel</button></div>
+  <form id="newTripForm" autocomplete="off" novalidate style="display:contents">
+    <div class="sheet-body">
+      <label class="field"><span class="label">Trip name</span>
+        <input id="newTripName" type="text" placeholder="e.g. AlUla Oct 2026 Ahmed" maxlength="40" autocapitalize="words" enterkeyhint="next"></label>
+      <p class="hint" style="margin-top:-8px">Must be unique. Once used, a name can never be used again, so make it specific.</p>
+      <label class="field"><span class="label">Password</span>
+        <span class="pw"><input id="newTripPass" type="password" placeholder="At least 6 characters" autocomplete="new-password" enterkeyhint="done">
+        <button type="button" class="linkish" data-reveal="newTripPass">Show</button></span></label>
+      <label class="field"><span class="label">Currency</span><select id="newTripCurrency"></select></label>
+      <p class="hint">Your friends join with the trip name and this password. Keep it between the people on the trip.</p>
+    </div>
+    <div class="sheet-foot">
+      <div class="err" id="newTripErr"></div>
+      <button class="btn primary block" type="submit" id="newTripSubmit">Create trip, then add friends</button>
+    </div>
+  </form>
+</div>
+
+<!-- Join trip sheet -->
+<div class="sheet" id="joinSheet" role="dialog" aria-modal="true" aria-labelledby="joinTitle" hidden>
+  <div class="sheet-h"><h2 id="joinTitle">Join a trip</h2><button class="btn ghost sm" type="button" data-close>Cancel</button></div>
+  <form id="joinForm" autocomplete="off" novalidate style="display:contents">
+    <div class="sheet-body">
+      <label class="field"><span class="label">Trip name</span>
+        <input id="joinName" type="text" maxlength="40" autocapitalize="words" enterkeyhint="next"></label>
+      <label class="field"><span class="label">Password</span>
+        <span class="pw"><input id="joinPass" type="password" autocomplete="current-password" enterkeyhint="go">
+        <button type="button" class="linkish" data-reveal="joinPass">Show</button></span></label>
+      <p class="hint">Ask the friend who created the trip for its name and password.</p>
+    </div>
+    <div class="sheet-foot">
+      <div class="err" id="joinErr"></div>
+      <button class="btn primary block" type="submit" id="joinSubmit">Join trip</button>
+    </div>
+  </form>
+</div>
+
+<!-- Add / edit payment sheet -->
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="formTitle" hidden>
-  <div class="sheet-h">
-    <h2 id="formTitle">Add a payment</h2>
-    <button class="btn ghost sm" type="button" id="closeSheet">Cancel</button>
-  </div>
+  <div class="sheet-h"><h2 id="formTitle">Add a payment</h2><button class="btn ghost sm" type="button" data-close>Cancel</button></div>
   <form id="expForm" autocomplete="off" novalidate style="display:contents">
     <div class="sheet-body">
       <label class="field"><span class="label">Amount</span>
         <input id="expAmount" class="amount-in" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00"></label>
       <label class="field"><span class="label">What was it for?</span>
-        <input id="expDesc" type="text" placeholder="e.g. Dinner at the harbour" maxlength="60" enterkeyhint="next"></label>
+        <input id="expDesc" type="text" placeholder="e.g. Dinner in the old town" maxlength="60" enterkeyhint="next"></label>
       <div class="field"><span class="label">Who paid?</span><div class="chips" id="payerChips" role="radiogroup" aria-label="Who paid"></div></div>
       <div class="field">
         <div class="split-head">
@@ -359,38 +465,51 @@ button.pay:hover{border-color:var(--ink-3)}
 
 <script>
 (function(){
-  const KEY='tripdivider.v1', TABKEY='tripdivider.tab';
-  const CURRENCIES=['SAR','USD','EUR','GBP','EGP','AED','KWD','QAR','JOD','TRY','MAD','INR','JPY','CAD','AUD','CHF'];
+  // ---------- Supabase (same project as the Assistants page; publishable key is safe to be public) ----------
+  const SUPABASE_URL='https://efqhigakipvabbcspurq.supabase.co';
+  const SUPABASE_KEY='sb_publishable_LszitImdN0859bqSCjwW9g__ocYqzPr';
+  async function rpc(fn,args){
+    const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(args)});
+    if(!r.ok){ const e=new Error(await r.text().catch(()=>'')||('HTTP '+r.status)); e.status=r.status; throw e; }
+    return r.json();
+  }
+
+  const STORE='tripdivider.v3';
+  const CURRENCIES=['SAR','USD','EUR','GBP','EGP','AED','KWD','QAR','BHD','OMR','JOD','TRY','MAD','INR','JPY','CAD','AUD','CHF'];
   const COLORS=['#1e6fb8','#c0582b','#2e8b57','#8e44ad','#b8860b','#c2185b','#00838f','#5d6d7e','#6d4c41','#3949ab'];
   const $=id=>document.getElementById(id);
   const uid=()=>Math.random().toString(36).slice(2,10);
   const today=()=>new Date().toISOString().slice(0,10);
+  const clone=o=>JSON.parse(JSON.stringify(o));
+  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-  function example(){
-    const f=['Ahmed','Sara','Omar','Lina'].map((n,i)=>({id:'f'+i,name:n,color:COLORS[i]}));
-    const all=f.map(x=>x.id);
-    return {example:true,name:'AlUla Weekend',currency:'SAR',friends:f,nextColor:4,expenses:[
-      {id:uid(),desc:'Desert villa (2 nights)',amount:240000,payer:'f0',date:'2026-09-18',mode:'equal',split:all},
-      {id:uid(),desc:'Car rental & fuel',amount:48000,payer:'f2',date:'2026-09-18',mode:'equal',split:all},
-      {id:uid(),desc:'Dinner in the old town',amount:62000,payer:'f1',date:'2026-09-19',mode:'equal',split:all},
-      {id:uid(),desc:'Hegra tour tickets',amount:28500,payer:'f3',date:'2026-09-19',mode:'equal',split:['f0','f1','f3']},
-      {id:uid(),desc:'Coffee & breakfast',amount:9600,payer:'f0',date:'2026-09-20',mode:'exact',split:['f0','f1','f2'],exact:{f0:2700,f1:3900,f2:3000}},
-    ]};
+  // ---------- local cache: trips this phone has joined (session token + last known copy) ----------
+  let store; try{store=JSON.parse(localStorage.getItem(STORE))}catch(e){}
+  if(!store||typeof store.trips!=='object') store={trips:{}};
+  const saveStore=()=>{try{localStorage.setItem(STORE,JSON.stringify(store))}catch(e){}};
+
+  // A live trip object: {id, token, data, version, updated, pending:[fns], dirty, saving}
+  const live={};
+  function getTrip(id){
+    if(live[id]) return live[id];
+    const c=store.trips[id]; if(!c) return null;
+    return live[id]={id,token:c.token,data:c.data,version:c.version,updated:c.updated,pending:[],dirty:!!c.dirty,saving:false};
   }
-  const blank=()=>({example:false,name:'My Trip',currency:'SAR',friends:[],nextColor:0,expenses:[]});
+  function cachePut(t){
+    store.trips[t.id]={token:t.token,data:t.data,version:t.version,updated:t.updated||new Date().toISOString(),dirty:t.dirty||t.pending.length>0};
+    saveStore();
+  }
+  function addJoined(r,data){
+    const t=live[r.id]={id:r.id,token:r.token,data,version:r.version,updated:r.updated_at||new Date().toISOString(),pending:[],dirty:false,saving:false};
+    cachePut(t); return t;
+  }
+  function forget(id){ delete store.trips[id]; delete live[id]; saveStore(); }
 
-  let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-  if(!S||!Array.isArray(S.friends)) S=example();
-  const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
-
-  // Money is kept in cents (integers) to avoid rounding errors.
+  // ---------- money ----------
   // Accepts Arabic digits (٠-٩) and a comma as the decimal separator, as phone keypads often send them.
   const toCents=v=>{const s=String(v??'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫,]/g,'.').replace(/[^0-9.]/g,'');return Math.round(parseFloat(s)*100);};
-  const fmt=c=>{try{return new Intl.NumberFormat(undefined,{style:'currency',currency:S.currency}).format(c/100)}catch(e){return (c/100).toFixed(2)+' '+S.currency}};
-  const friend=id=>S.friends.find(f=>f.id===id);
-  const nameOf=id=>(friend(id)||{name:'?'}).name;
-  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const avatar=(id,sm)=>{const f=friend(id)||{name:'?',color:'#888'};return `<span class="avatar${sm?' sm':''}" style="background:${f.color}" aria-hidden="true">${esc((f.name.trim()[0]||'?').toUpperCase())}</span>`};
+  const fmtIn=(c,cur)=>{try{return new Intl.NumberFormat(undefined,{style:'currency',currency:cur}).format(c/100)}catch(e){return (c/100).toFixed(2)+' '+cur}};
 
   function shares(e){
     const out={};
@@ -400,13 +519,13 @@ button.pay:hover{border-color:var(--ink-3)}
     e.split.forEach(id=>{out[id]=base+(rem>0?1:0); if(rem>0) rem--;});
     return out;
   }
-  function balances(){
-    const b={}; S.friends.forEach(f=>b[f.id]={paid:0,share:0});
-    S.expenses.forEach(e=>{ if(b[e.payer]) b[e.payer].paid+=e.amount; const sh=shares(e); for(const id in sh) if(b[id]) b[id].share+=sh[id]; });
+  function balancesOf(d){
+    const b={}; d.friends.forEach(f=>b[f.id]={paid:0,share:0});
+    d.expenses.forEach(e=>{ if(b[e.payer]) b[e.payer].paid+=e.amount; const sh=shares(e); for(const id in sh) if(b[id]) b[id].share+=sh[id]; });
     return b;
   }
   // Largest debtor pays largest creditor, repeated — keeps the number of transfers small.
-  function settlements(b){
+  function settlementsOf(b){
     const deb=[],cred=[];
     for(const id in b){const n=b[id].paid-b[id].share; if(n<0) deb.push({id,v:-n}); else if(n>0) cred.push({id,v:n});}
     deb.sort((a,c)=>c.v-a.v); cred.sort((a,c)=>c.v-a.v);
@@ -417,23 +536,215 @@ button.pay:hover{border-color:var(--ink-3)}
     }
     return t;
   }
+  const totalOf=d=>d.expenses.filter(e=>!e.settlement).reduce((s,e)=>s+e.amount,0);
 
-  // ---------- tabs ----------
+  // ---------- current trip ----------
+  let cur=null;              // live trip object on screen
+  let S=null;                // cur.data shortcut
+  const fmt=c=>fmtIn(c,S.currency);
+  const friend=id=>S.friends.find(f=>f.id===id);
+  const nameOf=id=>(friend(id)||{name:'?'}).name;
+  const avatar=(id,sm)=>{const f=friend(id)||{name:'?',color:'#888'};return `<span class="avatar${sm?' sm':''}" style="background:${f.color}" aria-hidden="true">${esc((f.name.trim()[0]||'?').toUpperCase())}</span>`};
+
+  // ---------- sync ----------
+  function setSync(t,state){
+    if(t!==cur) return;
+    const el=$('sync'); el.dataset.state=state;
+    el.textContent={saved:'Saved',saving:'Saving…',offline:'Offline',error:'Not saved'}[state];
+    el.title=state==='offline'?'No connection. Changes are kept on this phone and saved when you are back online.':'';
+  }
+  // Every change is a function applied to the trip data. If someone else saved first,
+  // we fetch their version and re-apply our pending changes on top, so nobody's edit is lost.
+  async function flush(t,tries=0){
+    if(t.saving||t.gone||(!t.pending.length&&!t.dirty)) return;
+    t.saving=true; setSync(t,'saving');
+    const n=t.pending.length;
+    try{
+      const r=await rpc('td_save_trip',{p_token:t.token,p_data:t.data,p_version:t.version});
+      if(r.ok){ t.version=r.version; t.pending.splice(0,n); t.dirty=t.pending.length>0; t.updated=new Date().toISOString(); }
+      else if(r.conflict){
+        const fresh=await rpc('td_get_trip',{p_token:t.token});
+        if(fresh){ const d=fresh.data; t.pending.forEach(fn=>fn(d)); t.data=d; t.version=fresh.version; if(t===cur){S=d; render();} }
+        else t.gone=true;
+      } else if(r.signed_out){ t.gone=true; }
+      t.saving=false;
+      if(t.gone){ signedOut(t); return; }
+      cachePut(t);
+      if((t.pending.length||t.dirty)&&tries<4) return flush(t,tries+1);
+      setSync(t,t.pending.length||t.dirty?'error':'saved');
+    }catch(e){
+      t.saving=false; cachePut(t);
+      if(e.status===404){ setupMissing(); setSync(t,'error'); }
+      else setSync(t,'offline');
+    }
+  }
+  // The server no longer accepts this phone's key: the password was changed or the trip was deleted
+  function signedOut(t){
+    const name=t.data.name; forget(t.id);
+    if(t===cur){ goHome(); }
+    toast(`You’ve been signed out of “${name}”. The password was changed or the trip was deleted.`);
+    renderHome();
+  }
+  const flushAll=()=>Object.values(live).forEach(t=>flush(t));
+  window.addEventListener('online',flushAll);
+  setInterval(()=>{ if(Object.values(live).some(t=>t.pending.length||t.dirty)) flushAll(); },15000);
+
+  function mutate(fn,msg){
+    fn(S); cur.pending.push(fn); cur.dirty=true; cachePut(cur); render(); if(msg) toast(msg); flush(cur);
+  }
+
+  // Pull the latest copy when coming back to the app (a friend may have added payments)
+  async function refreshCurrent(){
+    if(!cur||cur.pending.length||cur.dirty||cur.saving) return;
+    const t=cur;
+    try{
+      const fresh=await rpc('td_get_trip',{p_token:t.token});
+      if(!fresh){ t.gone=true; signedOut(t); return; }
+      if(fresh.version!==t.version&&!t.pending.length){ t.data=fresh.data; t.version=fresh.version; t.updated=fresh.updated_at; cachePut(t); if(t===cur){S=t.data; render();} }
+      setSync(t,'saved');
+    }catch(e){ if(e.status===404) setupMissing(); else setSync(t,'offline'); }
+  }
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ flushAll(); if(document.body.dataset.screen==='trip') refreshCurrent(); else refreshHome(); } });
+  setInterval(()=>{ if(document.visibilityState==='visible'&&document.body.dataset.screen==='trip') refreshCurrent(); },30000);
+
+  function setupMissing(){
+    const b=$('cloudBanner'); b.hidden=false;
+    b.innerHTML='Online saving isn’t set up yet. Run <code>tripdivider/supabase-setup.sql</code> in the Supabase SQL Editor.';
+  }
+
+  // ---------- navigation ----------
   function setTab(t){
     document.body.dataset.tab=t;
     document.querySelectorAll('.nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===t?'page':'false'));
-    try{localStorage.setItem(TABKEY,t)}catch(e){}
   }
   document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);window.scrollTo(0,0);});
-  let startTab='balances'; try{startTab=localStorage.getItem(TABKEY)||startTab}catch(e){}
-  const h=location.hash.slice(1); if(['balances','payments','people'].includes(h)) startTab=h;
-  setTab(['balances','payments','people'].includes(startTab)?startTab:'balances');
 
-  // ---------- sheet / form state ----------
-  let mode='equal', editing=null, payer=null, checked=new Set(), exactVals={}, lastFocus=null;
-  function openSheet(id){
-    if(!S.friends.length){ setTab('people'); toast('Add the people on this trip first'); $('friendName').focus(); return; }
-    lastFocus=document.activeElement;
+  function goHome(push=true){
+    closeSheets(); cur=null; S=null;
+    document.body.dataset.screen='home'; document.title='TripDivider';
+    if(push) history.pushState({},'',location.pathname);
+    renderHome(); refreshHome(); window.scrollTo(0,0);
+  }
+  function openTrip(id,{push=true,tab}={}){
+    const t=getTrip(id); if(!t){ goHome(push); return; }
+    if(push) history.pushState({trip:id},'',location.pathname+'?open='+id);
+    cur=t; S=t.data;
+    document.body.dataset.screen='trip';
+    setTab(tab||(S.friends.length<2?'people':S.expenses.length?'balances':'payments'));
+    $('search').value=''; resetDelete(); resetPw(); render(); window.scrollTo(0,0);
+    setSync(cur,cur.pending.length||cur.dirty?'saving':'saved');
+    flush(cur); refreshCurrent();
+  }
+  window.addEventListener('popstate',()=>{
+    const id=new URLSearchParams(location.search).get('open');
+    if(id&&store.trips[id]) openTrip(id,{push:false}); else goHome(false);
+  });
+  $('backBtn').onclick=()=>goHome();
+
+  // ---------- home ----------
+  function renderHome(){
+    const ids=Object.keys(store.trips).sort((a,b)=>(store.trips[b].updated||'').localeCompare(store.trips[a].updated||''));
+    $('tripsLabel').hidden=!ids.length;
+    $('tripList').innerHTML=ids.length?ids.map(id=>{
+      const c=store.trips[id], d=c.data, n=d.friends.length, p=d.expenses.filter(e=>!e.settlement).length;
+      const settled=p&&!settlementsOf(balancesOf(d)).length;
+      return `<button type="button" class="trip-card" data-open="${id}"><span class="trip-icon" aria-hidden="true">${esc((d.name.trim()[0]||'T').toUpperCase())}</span>
+        <div style="min-width:0"><div class="n">${esc(d.name)}</div><div class="m">${n} ${n===1?'friend':'friends'} · ${p} ${p===1?'payment':'payments'}${settled?' · all settled':''}</div></div>
+        <div class="t">${fmtIn(totalOf(d),d.currency)}${c.dirty?'<small>Not saved yet</small>':''}</div></button>`;
+    }).join(''):`<div class="home-empty"><strong>No trips yet</strong>Tap <b>Add trip</b> to start one, or <b>Join a trip</b> if a friend already made it.</div>`;
+  }
+  $('tripList').onclick=e=>{const b=e.target.closest('[data-open]'); if(b) openTrip(b.dataset.open);};
+  async function refreshHome(){
+    const ids=Object.keys(store.trips);
+    ids.forEach(id=>{ if(store.trips[id].dirty) flush(getTrip(id)); });
+    if(!ids.length) return;
+    try{
+      const rows=await rpc('td_get_trips',{p_tokens:ids.map(id=>store.trips[id].token)});
+      const seen=new Set();
+      rows.forEach(r=>{ seen.add(r.id); const t=getTrip(r.id);
+        if(t&&!t.pending.length&&!t.dirty&&!t.saving&&r.version!==t.version){ t.data=r.data; t.version=r.version; t.updated=r.updated_at; cachePut(t); } });
+      ids.forEach(id=>{ if(!seen.has(id)){ const t=getTrip(id); if(t){ t.gone=true; signedOut(t); } } });
+      $('cloudBanner').hidden=true;
+      if(document.body.dataset.screen==='home') renderHome();
+    }catch(e){ if(e.status===404) setupMissing(); }
+  }
+
+  // ---------- sheets ----------
+  let lastFocus=null;
+  function openSheetEl(el){ lastFocus=document.activeElement; $('scrim').hidden=false; el.hidden=false; document.body.classList.add('noscroll'); }
+  function closeSheets(){
+    ['sheet','tripSheet','joinSheet'].forEach(id=>$(id).hidden=true); $('scrim').hidden=true; document.body.classList.remove('noscroll'); editing=null;
+    ['newTripPass','joinPass'].forEach(id=>{ $(id).value=''; $(id).type='password'; });
+    document.querySelectorAll('[data-reveal]').forEach(b=>b.textContent='Show');
+    if(lastFocus&&lastFocus.focus) lastFocus.focus({preventScroll:true});
+  }
+  $('scrim').onclick=closeSheets;
+  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheets);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape') closeSheets();});
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-reveal]'); if(!b) return;
+    const inp=$(b.dataset.reveal); const show=inp.type==='password'; inp.type=show?'text':'password'; b.textContent=show?'Hide':'Show';
+  });
+  const busy=(btn,on,label)=>{ btn.disabled=on; if(label) btn.textContent=label; };
+  const netErr=e=>{ if(e.status===404){ setupMissing(); return 'Online saving isn’t set up yet.'; } return 'No connection. Check your internet and try again.'; };
+
+  // ---------- new trip ----------
+  const currencyOptions=CURRENCIES.map(c=>`<option>${c}</option>`).join('');
+  $('newTripCurrency').innerHTML=currencyOptions; $('currency').innerHTML=currencyOptions;
+  $('addTripBtn').onclick=()=>{
+    $('newTripName').value=''; $('newTripCurrency').value='SAR'; $('newTripErr').textContent='';
+    openSheetEl($('tripSheet')); setTimeout(()=>$('newTripName').focus(),60);
+  };
+  $('newTripForm').onsubmit=async e=>{
+    e.preventDefault(); const err=$('newTripErr'), btn=$('newTripSubmit');
+    const name=$('newTripName').value.replace(/\s+/g,' ').trim(), pass=$('newTripPass').value;
+    if(name.length<3) return err.textContent='Give the trip a name of at least 3 characters.';
+    if(pass.length<6) return err.textContent='Use a password of at least 6 characters.';
+    err.textContent=''; busy(btn,true,'Creating…');
+    const data={name,currency:$('newTripCurrency').value,friends:[],nextColor:0,expenses:[],created:today()};
+    try{
+      const r=await rpc('td_create_trip',{p_name:name,p_password:pass,p_data:data});
+      if(!r.ok){
+        err.textContent={name_taken:`“${name}” is already taken, and names can’t be reused. Make it more specific, for example by adding your name or the month.`,
+          weak_password:'Use a password of at least 6 characters.',bad_name:'Use a name between 3 and 40 characters.'}[r.error]||'Couldn’t create the trip.';
+      } else {
+        data.name=r.name||name; addJoined(r,data); closeSheets();
+        openTrip(r.id,{tab:'people'}); toast('Trip created. Now add your friends'); $('friendName').focus();
+      }
+    }catch(ex){ err.textContent=netErr(ex); }
+    busy(btn,false,'Create trip, then add friends');
+  };
+
+  // ---------- join trip ----------
+  function openJoin(name){
+    $('joinName').value=name||''; $('joinErr').textContent='';
+    openSheetEl($('joinSheet')); setTimeout(()=>(name?$('joinPass'):$('joinName')).focus(),60);
+  }
+  $('joinTripBtn').onclick=()=>openJoin('');
+  $('joinForm').onsubmit=async e=>{
+    e.preventDefault(); const err=$('joinErr'), btn=$('joinSubmit');
+    const name=$('joinName').value.trim(), pass=$('joinPass').value;
+    if(!name) return err.textContent='Enter the trip name.';
+    if(!pass) return err.textContent='Enter the trip password.';
+    err.textContent=''; busy(btn,true,'Checking…');
+    try{
+      const r=await rpc('td_join_trip',{p_name:name,p_password:pass});
+      if(!r.ok){
+        err.textContent=r.error==='locked'?`Too many wrong tries. Wait ${Math.ceil((r.seconds||300)/60)} minute(s) and try again.`:'Trip name or password is wrong.';
+      } else {
+        const old=store.trips[r.id]; if(old&&old.token!==r.token) rpc('td_leave_trip',{p_token:old.token}).catch(()=>{});
+        delete live[r.id]; addJoined(r,r.data); closeSheets();
+        history.replaceState({},'',location.pathname);
+        openTrip(r.id); toast('Joined '+r.data.name);
+      }
+    }catch(ex){ err.textContent=netErr(ex); }
+    busy(btn,false,'Join trip');
+  };
+
+  // ---------- payment sheet ----------
+  let mode='equal', editing=null, payer=null, checked=new Set(), exactVals={};
+  function openPaySheet(id){
+    if(!S.friends.length){ setTab('people'); toast('Add your friends first'); $('friendName').focus(); return; }
     editing=id||null; exactVals={}; $('expErr').textContent='';
     const x=id&&S.expenses.find(e=>e.id===id);
     if(x){
@@ -447,31 +758,23 @@ button.pay:hover{border-color:var(--ink-3)}
     $('formTitle').textContent=x?'Edit payment':'Add a payment';
     $('expSubmit').textContent=x?'Save changes':'Add payment';
     $('delArea').hidden=!x; if(x) resetDel();
-    renderPayers(); renderSplit();
-    $('scrim').hidden=false; $('sheet').hidden=false; document.body.classList.add('noscroll');
+    renderPayers(); renderSplit(); openSheetEl($('sheet'));
     if(!x) setTimeout(()=>$('expAmount').focus(),60);
-  }
-  function closeSheet(){
-    $('scrim').hidden=true; $('sheet').hidden=true; document.body.classList.remove('noscroll'); editing=null;
-    if(lastFocus&&lastFocus.focus) lastFocus.focus({preventScroll:true});
   }
   function resetDel(){
     $('delArea').innerHTML='<button type="button" class="btn block ghost danger" id="delBtn">Delete this payment</button>';
     $('delBtn').onclick=()=>{
       $('delArea').innerHTML='<div class="row"><button type="button" class="btn danger" id="delYes">Yes, delete</button><button type="button" class="btn" id="delNo">Keep it</button></div>';
-      $('delYes').onclick=()=>{S.expenses=S.expenses.filter(e=>e.id!==editing); closeSheet(); commit('Payment deleted');};
+      $('delYes').onclick=()=>{const id=editing; closeSheets(); mutate(s=>{s.expenses=s.expenses.filter(e=>e.id!==id)},'Payment deleted');};
       $('delNo').onclick=resetDel;
     };
   }
-  $('fab').onclick=()=>openSheet();
-  $('closeSheet').onclick=closeSheet; $('scrim').onclick=closeSheet;
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('sheet').hidden) closeSheet();});
+  $('fab').onclick=()=>openPaySheet();
 
   function renderPayers(){
     $('payerChips').innerHTML=S.friends.map(f=>`<label class="chip"><input type="radio" name="payer" id="payer-${f.id}" value="${f.id}" ${f.id===payer?'checked':''}><span>${avatar(f.id,true)}${esc(f.name)}</span></label>`).join('');
   }
   $('payerChips').addEventListener('change',e=>{payer=e.target.value;});
-
   function renderSplit(){
     $('modeEqual').setAttribute('aria-pressed',mode==='equal'); $('modeExact').setAttribute('aria-pressed',mode==='exact');
     const amt=toCents($('expAmount').value)||0;
@@ -480,7 +783,7 @@ button.pay:hover{border-color:var(--ink-3)}
     $('splitList').innerHTML=S.friends.map(f=>{
       const on=checked.has(f.id);
       const right=mode==='exact'
-        ?`<input type="text" inputmode="decimal" id="ex-${f.id}" data-exact="${f.id}" value="${exactVals[f.id]??''}" placeholder="0.00" ${on?'':'disabled'} aria-label="${esc(f.name)}'s amount">`
+        ?`<input type="text" inputmode="decimal" id="ex-${f.id}" data-exact="${f.id}" value="${esc(exactVals[f.id]??'')}" placeholder="0.00" ${on?'':'disabled'} aria-label="${esc(f.name)}'s amount">`
         :`<span class="share">${on?fmt(eq[f.id]||0):'—'}</span>`;
       return `<label class="split-item"><input type="checkbox" id="chk-${f.id}" data-chk="${f.id}" ${on?'checked':''}>${avatar(f.id,true)}<span class="nm">${esc(f.name)}</span>${right}</label>`;
     }).join('');
@@ -517,28 +820,36 @@ button.pay:hover{border-color:var(--ink-3)}
       const sum=split.reduce((s,id)=>s+exp.exact[id],0);
       if(sum!==amount) return err.textContent='The amounts add up to '+fmt(sum)+', but the payment is '+fmt(amount)+'.';
     }
-    const i=S.expenses.findIndex(x=>x.id===editing);
-    const msg=i>=0?'Payment updated':'Payment added';
-    if(i>=0) S.expenses[i]=exp; else S.expenses.push(exp);
-    closeSheet(); commit(msg);
+    const isEdit=!!editing; closeSheets();
+    mutate(s=>{const c=clone(exp), i=s.expenses.findIndex(x=>x.id===c.id); if(i>=0) s.expenses[i]=c; else s.expenses.push(c);},isEdit?'Payment updated':'Payment added');
+    if(!isEdit) setTab(document.body.dataset.tab==='people'?'payments':document.body.dataset.tab);
   };
 
-  // ---------- render ----------
+  // ---------- render trip ----------
   let lastTransfers=[];
   function render(){
-    $('tripTitle').textContent=S.name; document.title='TripDivider';
-    if(document.activeElement!==$('tripName')) $('tripName').value=S.name;
-    $('exampleNote').hidden=!S.example;
-    const b=balances(), t=settlements(b); lastTransfers=t;
-    const real=S.expenses.filter(e=>!e.settlement), total=real.reduce((s,e)=>s+e.amount,0);
+    if(!S) return;
+    $('tripTitle').textContent=S.name; document.title=S.name+' · TripDivider';
+    $('tripNameRO').textContent=S.name;
+    $('currency').value=CURRENCIES.includes(S.currency)?S.currency:'SAR';
+    const b=balancesOf(S), t=settlementsOf(b); lastTransfers=t;
+    const real=S.expenses.filter(e=>!e.settlement), total=totalOf(S);
     $('sTotal').textContent=fmt(total);
     $('sFriends').textContent=S.friends.length;
     $('sAvg').textContent=fmt(S.friends.length?Math.round(total/S.friends.length):0);
     $('sCount').textContent=real.length;
+    $('exportBtn').disabled=!S.expenses.length;
+
+    // guided steps: trip → friends → payments
+    const fDone=S.friends.length>=2, pDone=real.length>0;
+    $('steps').hidden=fDone&&pDone;
+    $('step2').className='step '+(fDone?'done':'cur'); $('step3').className='step '+(pDone?'done':fDone?'cur':'');
+    if(!fDone){ $('stepHint').textContent=S.friends.length?'Add at least one more friend.':'Add everyone who’s on this trip, including you.'; $('stepAction').textContent='Add friends'; $('stepAction').onclick=()=>{setTab('people');$('friendName').focus();}; }
+    else if(!pDone){ $('stepHint').textContent='Now add the first payment: who paid, and who it’s for.'; $('stepAction').textContent='Add payment'; $('stepAction').onclick=()=>openPaySheet(); }
 
     // settle
     $('settleCount').textContent=t.length?t.length+' payment'+(t.length>1?'s':''):'';
-    if(!S.expenses.length) $('settle').innerHTML='<div class="empty">Add a payment with the + button to see who owes whom.</div>';
+    if(!S.expenses.length) $('settle').innerHTML='<div class="empty">No payments yet. Tap + to add one.</div>';
     else if(!t.length) $('settle').innerHTML='<div class="done">Everyone is even. Nothing left to pay.</div>';
     else $('settle').innerHTML=t.map((x,i)=>`<div class="transfer"><div class="who">${avatar(x.from,true)}<strong>${esc(nameOf(x.from))}</strong><span class="arrow" aria-label="pays">→</span>${avatar(x.to,true)}<strong>${esc(nameOf(x.to))}</strong></div><span class="amt">${fmt(x.amount)}</span><button type="button" class="btn sm" data-settle="${i}">Mark paid</button></div>`).join('');
 
@@ -549,14 +860,14 @@ button.pay:hover{border-color:var(--ink-3)}
       const cls=net>0?'get':net<0?'owe':'even', label=net>0?'+'+fmt(net):net<0?'−'+fmt(-net):'even';
       const bar=net>0?`<i style="left:50%;width:${w}%;background:var(--get)"></i>`:net<0?`<i style="right:50%;width:${w}%;background:var(--owe)"></i>`:'';
       return `<div class="bal-row">${avatar(f.id)}<div><div class="bal-top"><span class="bal-name">${esc(f.name)}</span><span class="pill ${cls}" title="${net>0?'gets back':net<0?'owes':'settled'}">${label}</span></div><div class="bar">${bar}</div><div class="bal-sub">paid ${fmt(x.paid)} · share ${fmt(x.share)}</div></div></div>`;
-    }).join(''):'<div class="empty">No one here yet — add people in the People tab.</div>';
+    }).join(''):'<div class="empty">No friends yet.</div>';
 
-    // filter select
+    // filter
     const prevF=$('filterPerson').value;
     $('filterPerson').innerHTML='<option value="">Everyone</option>'+S.friends.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join('');
     if(friend(prevF)) $('filterPerson').value=prevF;
 
-    // payments grouped by day
+    // payments by day
     const q=$('search').value.trim().toLowerCase(), fp=$('filterPerson').value;
     const rows=S.expenses.slice().sort((a,c)=>(c.date||'').localeCompare(a.date||''))
       .filter(e=>(!q||e.desc.toLowerCase().includes(q)||nameOf(e.payer).toLowerCase().includes(q))&&(!fp||e.payer===fp||e.split.includes(fp)));
@@ -572,68 +883,183 @@ button.pay:hover{border-color:var(--ink-3)}
     });
     $('ledger').innerHTML=html||`<div class="empty">${S.expenses.length?'No payments match.':'No payments yet. Tap + to add the first one.'}</div>`;
 
-    // people
+    // friends
     const used=new Set(); S.expenses.forEach(e=>{used.add(e.payer); e.split.forEach(id=>used.add(id));});
     $('friendCount').textContent=S.friends.length?S.friends.length+' on this trip':'';
-    $('friends').innerHTML=S.friends.length?S.friends.map(f=>{
-      const n=b[f.id].paid-b[f.id].share;
-      return `<div class="person">${avatar(f.id)}<div style="min-width:0"><div class="n">${esc(f.name)}</div><div class="s">${used.has(f.id)?'paid '+fmt(b[f.id].paid):'no payments yet'}</div></div>${used.has(f.id)?'':`<button type="button" class="btn sm ghost danger" data-rm="${f.id}" aria-label="Remove ${esc(f.name)}">Remove</button>`}</div>`;
-    }).join(''):'<div class="empty">Add everyone on the trip to get started.</div>';
+    $('friends').innerHTML=S.friends.length?S.friends.map(f=>`<div class="person">${avatar(f.id)}<div style="min-width:0"><div class="n">${esc(f.name)}</div><div class="s">${used.has(f.id)?'paid '+fmt(b[f.id].paid):'no payments yet'}</div></div>${used.has(f.id)?'':`<button type="button" class="btn sm ghost danger" data-rm="${f.id}" aria-label="Remove ${esc(f.name)}">Remove</button>`}</div>`).join('')
+      :'<div class="empty">Add everyone on the trip, including you.</div>';
+    if(fDone&&!pDone&&!$('friends').querySelector('.next-step'))
+      $('friends').insertAdjacentHTML('beforeend','<button type="button" class="btn primary block next-step" id="nextToPay" style="margin-top:8px">Next: add the first payment</button>');
   }
 
   // ---------- events ----------
-  function toast(msg){document.querySelectorAll('.toast').forEach(t=>t.remove()); const t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2000);}
-  function commit(msg){S.example=false; save(); render(); if(msg) toast(msg);}
+  function toast(msg){document.querySelectorAll('.toast').forEach(t=>t.remove()); const t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2200);}
 
-  $('currency').innerHTML=CURRENCIES.map(c=>`<option>${c}</option>`).join('');
-  const syncCurrency=()=>{$('currency').value=CURRENCIES.includes(S.currency)?S.currency:'SAR';};
-  syncCurrency();
-  $('currency').onchange=e=>{S.currency=e.target.value; save(); render();};
-  $('tripName').oninput=e=>{S.name=e.target.value.trim()||'My Trip'; save(); $('tripTitle').textContent=S.name;};
+  $('currency').onchange=e=>{const v=e.target.value; mutate(s=>{s.currency=v;});};
 
   $('friendForm').onsubmit=e=>{
     e.preventDefault(); const n=$('friendName').value.trim();
     if(!n){$('friendErr').textContent='Type a name first.';return;}
     if(S.friends.some(f=>f.name.toLowerCase()===n.toLowerCase())){$('friendErr').textContent=n+' is already on the trip.';return;}
-    S.friends.push({id:uid(),name:n,color:COLORS[(S.nextColor++)%COLORS.length]});
-    $('friendName').value=''; $('friendErr').textContent=''; commit('Added '+n); $('friendName').focus();
+    const id=uid();
+    $('friendName').value=''; $('friendErr').textContent='';
+    mutate(s=>{ if(!s.friends.some(f=>f.id===id)) s.friends.push({id,name:n,color:COLORS[(s.nextColor++)%COLORS.length]}); },'Added '+n);
+    $('friendName').focus();
   };
-  $('friends').onclick=e=>{const id=e.target.dataset.rm; if(!id) return; const n=nameOf(id); S.friends=S.friends.filter(f=>f.id!==id); commit('Removed '+n);};
-
+  $('friends').onclick=e=>{
+    if(e.target.id==='nextToPay'){ openPaySheet(); return; }
+    const id=e.target.dataset.rm; if(!id) return; const n=nameOf(id);
+    mutate(s=>{s.friends=s.friends.filter(f=>f.id!==id)},'Removed '+n);
+  };
   $('ledger').onclick=e=>{
-    const u=e.target.closest('[data-undo]'); if(u){S.expenses=S.expenses.filter(x=>x.id!==u.dataset.undo); commit('Settlement undone'); return;}
-    const p=e.target.closest('[data-edit]'); if(p) openSheet(p.dataset.edit);
+    const u=e.target.closest('[data-undo]'); if(u){const id=u.dataset.undo; mutate(s=>{s.expenses=s.expenses.filter(x=>x.id!==id)},'Settlement undone'); return;}
+    const p=e.target.closest('[data-edit]'); if(p) openPaySheet(p.dataset.edit);
   };
   $('settle').onclick=e=>{
     const i=e.target.dataset.settle; if(i===undefined) return; const x=lastTransfers[+i]; if(!x) return;
-    S.expenses.push({id:uid(),desc:nameOf(x.from)+' paid back '+nameOf(x.to),amount:x.amount,payer:x.from,date:today(),mode:'equal',split:[x.to],settlement:true});
-    commit('Recorded: '+nameOf(x.from)+' paid '+fmt(x.amount));
+    const exp={id:uid(),desc:nameOf(x.from)+' paid back '+nameOf(x.to),amount:x.amount,payer:x.from,date:today(),mode:'equal',split:[x.to],settlement:true};
+    mutate(s=>{ if(!s.expenses.some(y=>y.id===exp.id)) s.expenses.push(clone(exp)); },'Recorded: '+nameOf(x.from)+' paid '+fmt(x.amount));
   };
   $('search').oninput=render; $('filterPerson').onchange=render;
 
-  function restoreReset(){$('resetArea').innerHTML='<button class="btn block danger" id="resetBtn" type="button">Erase and start a new trip</button>'; $('resetBtn').onclick=askReset;}
-  function askReset(){
-    $('resetArea').innerHTML='<div style="display:grid;gap:8px"><span>This erases every person and payment on this trip.</span><div class="row"><button type="button" class="btn danger" id="resetYes">Erase trip</button><button type="button" class="btn" id="resetNo">Cancel</button></div></div>';
-    $('resetYes').onclick=()=>{S=blank(); save(); syncCurrency(); restoreReset(); render(); toast('Started a new trip');};
-    $('resetNo').onclick=restoreReset;
-  }
-  $('resetBtn').onclick=askReset;
-  $('clearExample').onclick=()=>{S=blank(); save(); syncCurrency(); render(); setTab('people'); $('friendName').focus();};
+  // invite: link opens the Join form with the trip name filled in; the password is shared separately
+  $('shareBtn').onclick=async()=>{
+    const url=location.origin+location.pathname+'?join='+encodeURIComponent(S.name);
+    const text=`Join our trip “${S.name}” on TripDivider to add and see our shared expenses.\nTrip name: ${S.name}\nPassword: ask me`;
+    if(navigator.share){ try{ await navigator.share({title:S.name,text,url}); return; }catch(e){ if(e.name==='AbortError') return; } }
+    copyText(text+'\n'+url,'Invite copied. Send it with the password to your friends');
+  };
 
+  // change password
+  function resetPw(){
+    $('pwArea').innerHTML='<button class="btn block" id="pwBtn" type="button">Change password</button>';
+    $('pwBtn').onclick=()=>{
+      $('pwArea').innerHTML=`<form id="pwForm" style="display:grid;gap:10px" autocomplete="off" novalidate>
+        <label class="field"><span class="label">Current password</span><input id="pwOld" type="password" autocomplete="current-password"></label>
+        <label class="field"><span class="label">New password</span><input id="pwNew" type="password" autocomplete="new-password" placeholder="At least 6 characters"></label>
+        <p class="hint">Everyone else on other phones will be signed out and need the new password.</p>
+        <div class="err" id="pwErr"></div>
+        <div class="row"><button class="btn primary" type="submit" id="pwSave">Change password</button><button class="btn" type="button" id="pwCancel">Cancel</button></div></form>`;
+      $('pwCancel').onclick=resetPw; $('pwOld').focus();
+      $('pwForm').onsubmit=async e=>{
+        e.preventDefault(); const err=$('pwErr'), t=cur, nw=$('pwNew').value;
+        if(nw.length<6) return err.textContent='Use a new password of at least 6 characters.';
+        busy($('pwSave'),true,'Saving…');
+        try{
+          const r=await rpc('td_change_password',{p_token:t.token,p_old:$('pwOld').value,p_new:nw});
+          if(r.ok){ t.token=r.token; cachePut(t); resetPw(); toast('Password changed. Send the new one to your friends'); return; }
+          if(r.error==='signed_out'){ t.gone=true; signedOut(t); return; }
+          err.textContent=r.error==='wrong'?'Current password is wrong.':'Use a new password of at least 6 characters.';
+        }catch(ex){ err.textContent=netErr(ex); }
+        busy($('pwSave'),false,'Change password');
+      };
+    };
+  }
+
+  // sign out / delete
+  function resetDelete(){
+    $('deleteArea').innerHTML='<div style="display:grid;gap:8px"><button class="btn block" id="removeBtn" type="button">Sign out of this trip on this phone</button><button class="btn block danger" id="deleteBtn" type="button">Delete trip for everyone</button></div>';
+    $('removeBtn').onclick=async()=>{
+      const t=cur;
+      if(t.pending.length||t.dirty){ await flush(t); if(t.pending.length||t.dirty){ toast('Some changes aren’t saved yet. Connect to the internet first.'); return; } }
+      rpc('td_leave_trip',{p_token:t.token}).catch(()=>{});
+      forget(t.id); goHome(); toast('Signed out. Join again with the trip name and password.');
+    };
+    $('deleteBtn').onclick=()=>{
+      $('deleteArea').innerHTML=`<form id="delForm" style="display:grid;gap:10px" novalidate>
+        <span>This deletes the trip and all its payments for everyone. It can’t be undone, and the name can’t be used again.</span>
+        <label class="field"><span class="label">Trip password</span><input id="delPass" type="password" autocomplete="current-password"></label>
+        <div class="err" id="delErr"></div>
+        <div class="row"><button type="submit" class="btn danger" id="delTripYes">Delete trip</button><button type="button" class="btn" id="delTripNo">Cancel</button></div></form>`;
+      $('delTripNo').onclick=resetDelete; $('delPass').focus();
+      $('delForm').onsubmit=async e=>{
+        e.preventDefault(); const t=cur, err=$('delErr');
+        busy($('delTripYes'),true,'Deleting…');
+        try{
+          const r=await rpc('td_delete_trip',{p_token:t.token,p_password:$('delPass').value});
+          if(r.ok){ t.gone=true; forget(t.id); goHome(); toast('Trip deleted'); return; }
+          if(r.error==='signed_out'){ t.gone=true; signedOut(t); return; }
+          err.textContent='Password is wrong.';
+        }catch(ex){ err.textContent=netErr(ex); }
+        busy($('delTripYes'),false,'Delete trip');
+      };
+    };
+  }
+
+  // copy summary
   $('copySummary').onclick=()=>{
-    const b=balances(), t=settlements(b), total=S.expenses.filter(e=>!e.settlement).reduce((s,e)=>s+e.amount,0);
-    let txt=`🧳 ${S.name} — total ${fmt(total)}\n\nBalances:\n`;
+    const b=balancesOf(S), t=settlementsOf(b);
+    let txt=`🧳 ${S.name} — total ${fmt(totalOf(S))}\n\nBalances:\n`;
     S.friends.forEach(f=>{const n=b[f.id].paid-b[f.id].share; txt+=`• ${f.name}: ${n>0?'gets back '+fmt(n):n<0?'owes '+fmt(-n):'settled'}\n`;});
     txt+='\nTo settle up:\n'+(t.length?t.map(x=>`• ${nameOf(x.from)} → ${nameOf(x.to)}: ${fmt(x.amount)}`).join('\n'):'• Everyone is even!');
-    if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>toast('Summary copied'),()=>fallbackCopy(txt)); else fallbackCopy(txt);
+    copyText(txt,'Summary copied');
   };
-  function fallbackCopy(txt){
-    const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select();
-    try{document.execCommand('copy'); toast('Summary copied');}catch(e){toast('Copy didn’t work on this device');} ta.remove();
+  function copyText(txt,okMsg){
+    const fallback=()=>{const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select();
+      try{document.execCommand('copy'); toast(okMsg);}catch(e){toast('Copy didn’t work on this device');} ta.remove();};
+    if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>toast(okMsg),fallback); else fallback();
   }
 
-  render();
+  // ---------- Excel export (SheetJS, loaded only when needed) ----------
+  let xlsxLoading=null;
+  function loadXLSX(){
+    if(window.XLSX) return Promise.resolve();
+    return xlsxLoading||(xlsxLoading=new Promise((res,rej)=>{const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload=res; s.onerror=()=>{xlsxLoading=null;rej();}; document.head.appendChild(s);}));
+  }
+  $('exportBtn').onclick=async()=>{
+    const btn=$('exportBtn'); btn.disabled=true; btn.textContent='Preparing…';
+    try{ await loadXLSX(); exportXlsx(); toast('Excel file downloaded'); }
+    catch(e){ toast('Couldn’t load the Excel tool. Check your connection.'); }
+    btn.textContent='Export to Excel'; btn.disabled=!S.expenses.length;
+  };
+  function exportXlsx(){
+    const X=window.XLSX, d=S, b=balancesOf(d), t=settlementsOf(b), money='#,##0.00';
+    const total=totalOf(d), dates=d.expenses.map(e=>e.date).filter(Boolean).sort();
+    const range=dates.length?(dates[0]===dates[dates.length-1]?dates[0]:dates[0]+' to '+dates[dates.length-1]):'';
+    const setFmt=(ws,cols,from)=>{const r=X.utils.decode_range(ws['!ref']); for(let R=from;R<=r.e.r;R++) cols.forEach(C=>{const c=ws[X.utils.encode_cell({r:R,c:C})]; if(c&&typeof c.v==='number') c.z=money;});};
+
+    const sum=[['Trip',d.name],['Currency',d.currency],['Dates',range],['Total spent',total/100],['People',d.friends.length],
+      ['Average per person',d.friends.length?Math.round(total/d.friends.length)/100:0],[],
+      ['Person','Paid','Share','Balance','Status']];
+    d.friends.forEach(f=>{const x=b[f.id], n=x.paid-x.share; sum.push([f.name,x.paid/100,x.share/100,n/100,n>0?'Gets back':n<0?'Owes':'Settled']);});
+    const ws1=X.utils.aoa_to_sheet(sum); setFmt(ws1,[1,2,3],8);
+    ['B4','B6'].forEach(a=>{ if(ws1[a]) ws1[a].z=money; });
+    ws1['!cols']=[{wch:20},{wch:16},{wch:14},{wch:14},{wch:12}];
+
+    const head=['Date','Description','Paid by','Amount','Type','Split between',...d.friends.map(f=>f.name+' share')];
+    const pay=[head];
+    d.expenses.slice().sort((a,c)=>(a.date||'').localeCompare(c.date||'')).forEach(e=>{
+      const sh=shares(e);
+      pay.push([e.date||'',e.desc,nameOf(e.payer),e.amount/100,e.settlement?'Settlement':e.mode==='exact'?'Exact amounts':'Equal split',
+        e.split.map(nameOf).join(', '),...d.friends.map(f=>sh[f.id]!=null?sh[f.id]/100:'')]);
+    });
+    pay.push([],['','Total (excluding settlements)','',total/100]);
+    const ws2=X.utils.aoa_to_sheet(pay); setFmt(ws2,[3,...d.friends.map((_,i)=>6+i)],1);
+    ws2['!cols']=[{wch:12},{wch:30},{wch:14},{wch:12},{wch:14},{wch:28},...d.friends.map(()=>({wch:14}))];
+
+    const st=[['From','To','Amount']]; t.forEach(x=>st.push([nameOf(x.from),nameOf(x.to),x.amount/100]));
+    if(!t.length) st.push(['Everyone is even','','']);
+    const ws3=X.utils.aoa_to_sheet(st); setFmt(ws3,[2],1); ws3['!cols']=[{wch:18},{wch:18},{wch:14}];
+
+    const wb=X.utils.book_new();
+    X.utils.book_append_sheet(wb,ws1,'Summary'); X.utils.book_append_sheet(wb,ws2,'Payments'); X.utils.book_append_sheet(wb,ws3,'Settle up');
+    const safe=d.name.replace(/[\\/:*?"<>|]+/g,'').trim()||'Trip';
+    X.writeFile(wb,`${safe} - TripDivider ${today()}.xlsx`);
+  }
+
+  // ---------- start ----------
+  const qs=new URLSearchParams(location.search), openId=qs.get('open'), joinName=qs.get('join');
+  if(openId&&store.trips[openId]){ history.replaceState({trip:openId},'',location.href); openTrip(openId,{push:false}); }
+  else {
+    goHome(false); history.replaceState({},'',location.pathname);
+    if(joinName){
+      // Invite link: open the trip if this phone already joined it, otherwise ask for the password
+      const k=joinName.trim().toLowerCase(), have=Object.keys(store.trips).find(id=>store.trips[id].data.name.toLowerCase()===k);
+      if(have) openTrip(have); else openJoin(joinName);
+    }
+  }
 })();
 </script>
-
+</body>
 </html>
