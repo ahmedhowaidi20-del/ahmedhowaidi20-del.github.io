@@ -362,6 +362,7 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
         <section aria-labelledby="payHead">
           <h3 class="sec-title" id="payHead">Who pays whom</h3>
           <div class="settle" id="settle"></div>
+          <button class="btn block" id="giveBtn" type="button" style="margin-top:10px">+ Record money given between friends</button>
         </section>
         <section aria-labelledby="balHead">
           <h3 class="sec-title" id="balHead">Everyone’s balance</h3>
@@ -439,6 +440,25 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
     <div class="sheet-foot">
       <div class="err" id="newTripErr"></div>
       <button class="btn primary block" type="submit" id="newTripSubmit">Create trip, then add friends</button>
+    </div>
+  </form>
+</div>
+
+<!-- Money given between friends -->
+<div class="sheet" id="giveSheet" role="dialog" aria-modal="true" aria-labelledby="giveTitle" hidden>
+  <div class="sheet-h"><h2 id="giveTitle">Money given</h2><button class="btn ghost sm" type="button" data-close>Cancel</button></div>
+  <form id="giveForm" autocomplete="off" novalidate style="display:contents">
+    <div class="sheet-body">
+      <label class="field"><span class="label">Amount</span>
+        <input id="giveAmount" class="amount-in" type="text" inputmode="decimal" placeholder="0.00"></label>
+      <div class="field"><span class="label">Who gave the money?</span><div class="chips" id="giveFrom" role="radiogroup" aria-label="Who gave the money"></div></div>
+      <div class="field"><span class="label">Who received it?</span><div class="chips" id="giveTo" role="radiogroup" aria-label="Who received it"></div></div>
+      <label class="field"><span class="label">Date</span><input id="giveDate" type="date"></label>
+      <p class="hint">Use this when a friend pays another friend back, fully or partly, or hands them money. It changes the balances but isn’t counted as trip spending.</p>
+    </div>
+    <div class="sheet-foot">
+      <div class="err" id="giveErr"></div>
+      <button class="btn primary block" type="submit">Record money given</button>
     </div>
   </form>
 </div>
@@ -722,7 +742,7 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
   let lastFocus=null;
   function openSheetEl(el){ lastFocus=document.activeElement; $('scrim').hidden=false; el.hidden=false; document.body.classList.add('noscroll'); }
   function closeSheets(){
-    ['sheet','tripSheet','joinSheet'].forEach(id=>$(id).hidden=true); $('scrim').hidden=true; document.body.classList.remove('noscroll'); editing=null;
+    ['sheet','tripSheet','joinSheet','giveSheet'].forEach(id=>$(id).hidden=true); $('scrim').hidden=true; document.body.classList.remove('noscroll'); editing=null;
     ['newTripPass','joinPass'].forEach(id=>{ $(id).value=''; $(id).type='password'; });
     document.querySelectorAll('[data-reveal]').forEach(b=>b.textContent='Show');
     if(lastFocus&&lastFocus.focus) lastFocus.focus({preventScroll:true});
@@ -963,6 +983,7 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
         <div class="xfer-line"><b>${esc(nameOf(x.from))}</b> pays <b>${esc(nameOf(x.to))}</b></div>
         <div class="xfer-amt">${fmt(x.amount)}</div>
         <button type="button" class="btn block" data-settle="${i}">Mark as paid</button>
+        <button type="button" class="linkish" data-partial="${i}" style="justify-self:center">Paid a different amount?</button>
       </div>`).join('');
 
     // everyone's balance: biggest "gets back" first, biggest "owes" last
@@ -986,7 +1007,7 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
     rows.forEach(e=>{
       if(e.date!==lastDay){ lastDay=e.date; html+=`<div class="day">${e.date?new Date(e.date+'T00:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'}):'No date'}</div>`; }
       if(e.settlement){
-        html+=`<div class="pay settlement">${avatar(e.payer)}<div style="min-width:0"><div class="desc">${esc(nameOf(e.payer))} paid ${esc(nameOf(e.split[0]))}</div><div class="meta">Settlement</div></div><div style="display:grid;justify-items:end;gap:2px"><span class="amt">${fmt(e.amount)}</span><button type="button" class="linkish" data-undo="${e.id}">Undo</button></div></div>`;
+        html+=`<div class="pay settlement">${avatar(e.payer)}<div style="min-width:0"><div class="desc">${esc(nameOf(e.payer))} gave ${esc(nameOf(e.split[0]))}</div><div class="meta">Money given · not trip spending</div></div><div style="display:grid;justify-items:end;gap:2px"><span class="amt">${fmt(e.amount)}</span><button type="button" class="linkish" data-undo="${e.id}">Undo</button></div></div>`;
       } else {
         const who=e.split.length===S.friends.length&&e.mode==='equal'?'everyone':e.split.length===1?nameOf(e.split[0]):e.split.length+' people';
         html+=`<button type="button" class="pay" data-edit="${e.id}">${avatar(payerIds(e)[0])}<div style="min-width:0"><div class="desc">${esc(e.desc)}</div><div class="meta">${esc(payerLabel(e))} paid · split with ${esc(who)}${e.mode==='exact'?' (exact)':''}</div></div><span class="amt">${fmt(e.amount)}</span></button>`;
@@ -1023,15 +1044,43 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
     mutate(s=>{s.friends=s.friends.filter(f=>f.id!==id)},'Removed '+n);
   };
   $('ledger').onclick=e=>{
-    const u=e.target.closest('[data-undo]'); if(u){const id=u.dataset.undo; mutate(s=>{s.expenses=s.expenses.filter(x=>x.id!==id)},'Settlement undone'); return;}
+    const u=e.target.closest('[data-undo]'); if(u){const id=u.dataset.undo; mutate(s=>{s.expenses=s.expenses.filter(x=>x.id!==id)},'Removed'); return;}
     const p=e.target.closest('[data-edit]'); if(p) openPaySheet(p.dataset.edit);
   };
   $('settle').onclick=e=>{
+    const pi=e.target.dataset.partial; if(pi!==undefined){ const x=lastTransfers[+pi]; if(x) openGive(x.from,x.to); return; }
     const i=e.target.dataset.settle; if(i===undefined) return; const x=lastTransfers[+i]; if(!x) return;
     const exp={id:uid(),desc:nameOf(x.from)+' paid back '+nameOf(x.to),amount:x.amount,payer:x.from,date:today(),mode:'equal',split:[x.to],settlement:true};
     mutate(s=>{ if(!s.expenses.some(y=>y.id===exp.id)) s.expenses.push(clone(exp)); },'Recorded: '+nameOf(x.from)+' paid '+fmt(x.amount));
   };
   $('search').oninput=render; $('filterPerson').onchange=render;
+
+  // money given between friends (full or partial payback, or any hand-over): recorded like a
+  // settlement — the giver's balance goes up, the receiver's goes down, trip spending is unchanged
+  let giveFrom=null, giveTo=null;
+  function openGive(from,to){
+    if(S.friends.length<2){ toast('Add at least 2 friends first'); return; }
+    giveFrom=friend(from)?from:S.friends[0].id;
+    giveTo=friend(to)&&to!==giveFrom?to:S.friends.find(f=>f.id!==giveFrom).id;
+    $('giveAmount').value=''; $('giveDate').value=today(); $('giveErr').textContent='';
+    renderGive(); openSheetEl($('giveSheet')); setTimeout(()=>$('giveAmount').focus(),60);
+  }
+  function renderGive(){
+    const chips=(name,sel)=>S.friends.map(f=>`<label class="chip"><input type="radio" name="${name}" id="${name}-${f.id}" value="${f.id}" ${f.id===sel?'checked':''}><span>${avatar(f.id,true)}${esc(f.name)}</span></label>`).join('');
+    $('giveFrom').innerHTML=chips('giveFrom',giveFrom); $('giveTo').innerHTML=chips('giveTo',giveTo);
+  }
+  $('giveFrom').addEventListener('change',e=>{giveFrom=e.target.value; if(giveTo===giveFrom){ giveTo=S.friends.find(f=>f.id!==giveFrom).id; renderGive(); }});
+  $('giveTo').addEventListener('change',e=>{giveTo=e.target.value; if(giveTo===giveFrom){ giveFrom=S.friends.find(f=>f.id!==giveTo).id; renderGive(); }});
+  $('giveBtn').onclick=()=>openGive();
+  $('giveForm').onsubmit=e=>{
+    e.preventDefault(); const err=$('giveErr'), amount=toCents($('giveAmount').value);
+    if(!(amount>0)) return err.textContent='Enter an amount greater than zero.';
+    if(!friend(giveFrom)||!friend(giveTo)) return err.textContent='Choose who gave and who received the money.';
+    if(giveFrom===giveTo) return err.textContent='The giver and the receiver must be different people.';
+    const exp={id:uid(),desc:nameOf(giveFrom)+' gave '+nameOf(giveTo),amount,payer:giveFrom,date:$('giveDate').value||today(),mode:'equal',split:[giveTo],settlement:true};
+    const msg='Recorded: '+nameOf(giveFrom)+' gave '+nameOf(giveTo)+' '+fmt(amount);
+    closeSheets(); mutate(s=>{ if(!s.expenses.some(y=>y.id===exp.id)) s.expenses.push(clone(exp)); },msg);
+  };
 
   // invite: link opens the Join form with the trip name filled in; the password is shared separately
   $('shareBtn').onclick=async()=>{
@@ -1144,10 +1193,10 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
     const pay=[head];
     d.expenses.slice().sort((a,c)=>(a.date||'').localeCompare(c.date||'')).forEach(e=>{
       const sh=shares(e);
-      pay.push([e.date||'',e.desc,payerIds(e).length>1?payerIds(e).map(id=>nameOf(id)+' '+(paidMap(e)[id]/100).toFixed(2)).join(', '):nameOf(e.payer),e.amount/100,e.settlement?'Settlement':e.mode==='exact'?'Exact amounts':'Equal split',
+      pay.push([e.date||'',e.desc,payerIds(e).length>1?payerIds(e).map(id=>nameOf(id)+' '+(paidMap(e)[id]/100).toFixed(2)).join(', '):nameOf(e.payer),e.amount/100,e.settlement?'Money given':e.mode==='exact'?'Exact amounts':'Equal split',
         e.split.map(nameOf).join(', '),...d.friends.map(f=>sh[f.id]!=null?sh[f.id]/100:'')]);
     });
-    pay.push([],['','Total (excluding settlements)','',total/100]);
+    pay.push([],['','Total spent (excluding money given)','',total/100]);
     const ws2=X.utils.aoa_to_sheet(pay); setFmt(ws2,[3,...d.friends.map((_,i)=>6+i)],1);
     ws2['!cols']=[{wch:12},{wch:30},{wch:14},{wch:12},{wch:14},{wch:28},...d.friends.map(()=>({wch:14}))];
 
