@@ -446,7 +446,18 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
         <input id="expAmount" class="amount-in" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00"></label>
       <label class="field"><span class="label">What was it for?</span>
         <input id="expDesc" type="text" placeholder="e.g. Dinner in the old town" maxlength="60" enterkeyhint="next"></label>
-      <div class="field"><span class="label">Who paid?</span><div class="chips" id="payerChips" role="radiogroup" aria-label="Who paid"></div></div>
+      <div class="field">
+        <div class="split-head">
+          <span class="label">Who paid?</span>
+          <div class="seg" role="group" aria-label="How many people paid">
+            <button type="button" id="payOne" aria-pressed="true">One person</button>
+            <button type="button" id="payMany" aria-pressed="false">Several</button>
+          </div>
+        </div>
+        <div class="chips" id="payerChips" role="radiogroup" aria-label="Who paid"></div>
+        <div class="split-list" id="payerList" hidden></div>
+        <div class="split-foot" id="payerFoot" hidden><span id="payerMsg"></span></div>
+      </div>
       <div class="field">
         <div class="split-head">
           <span class="label">Split between</span>
@@ -519,6 +530,10 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
   const toCents=v=>{const s=String(v??'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫,]/g,'.').replace(/[^0-9.]/g,'');return Math.round(parseFloat(s)*100);};
   const fmtIn=(c,cur)=>{try{return new Intl.NumberFormat(undefined,{style:'currency',currency:cur}).format(c/100)}catch(e){return (c/100).toFixed(2)+' '+cur}};
 
+  // Who paid how much: {friendId: cents}. Older payments have a single `payer` who paid it all.
+  const paidMap=e=>e.payers||{[e.payer]:e.amount};
+  const payerIds=e=>{const pm=paidMap(e); return Object.keys(pm).filter(id=>pm[id]>0);};
+
   function shares(e){
     const out={};
     if(e.mode==='exact'){e.split.forEach(id=>out[id]=(e.exact&&e.exact[id])||0);return out;}
@@ -529,7 +544,7 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
   }
   function balancesOf(d){
     const b={}; d.friends.forEach(f=>b[f.id]={paid:0,share:0});
-    d.expenses.forEach(e=>{ if(b[e.payer]) b[e.payer].paid+=e.amount; const sh=shares(e); for(const id in sh) if(b[id]) b[id].share+=sh[id]; });
+    d.expenses.forEach(e=>{ const pm=paidMap(e); for(const id in pm) if(b[id]) b[id].paid+=pm[id]; const sh=shares(e); for(const id in sh) if(b[id]) b[id].share+=sh[id]; });
     return b;
   }
   // Largest debtor pays largest creditor, repeated — keeps the number of transfers small.
@@ -552,6 +567,7 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
   const fmt=c=>fmtIn(c,S.currency);
   const friend=id=>S.friends.find(f=>f.id===id);
   const nameOf=id=>(friend(id)||{name:'?'}).name;
+  const payerLabel=e=>{const ids=payerIds(e); return ids.length===1?nameOf(ids[0]):ids.length===2?nameOf(ids[0])+' & '+nameOf(ids[1]):ids.length+' people';};
   const avatar=(id,sm)=>{const f=friend(id)||{name:'?',color:'#888'};return `<span class="avatar${sm?' sm':''}" style="background:${f.color}" aria-hidden="true">${esc((f.name.trim()[0]||'?').toUpperCase())}</span>`};
 
   // ---------- sync ----------
@@ -751,16 +767,21 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
 
   // ---------- payment sheet ----------
   let mode='equal', editing=null, payer=null, checked=new Set(), exactVals={};
+  // Several payers: who's ticked, what each typed, and whether they've edited amounts by hand
+  let payMode='one', payChecked=new Set(), payVals={}, payManual=false;
   function openPaySheet(id){
     if(!S.friends.length){ setTab('people'); toast('Add your friends first'); $('friendName').focus(); return; }
-    editing=id||null; exactVals={}; $('expErr').textContent='';
+    editing=id||null; exactVals={}; payVals={}; payManual=false; $('expErr').textContent='';
     const x=id&&S.expenses.find(e=>e.id===id);
     if(x){
       mode=x.mode; checked=new Set(x.split); payer=x.payer;
       if(x.exact) for(const k in x.exact) exactVals[k]=(x.exact[k]/100).toFixed(2);
+      if(x.payers){ payMode='many'; payManual=true; payChecked=new Set(payerIds(x)); payChecked.forEach(k=>payVals[k]=(x.payers[k]/100).toFixed(2)); }
+      else { payMode='one'; payChecked=new Set([payer]); }
       $('expDesc').value=x.desc; $('expAmount').value=(x.amount/100).toFixed(2); $('expDate').value=x.date||today();
     } else {
       mode='equal'; checked=new Set(S.friends.map(f=>f.id)); if(!friend(payer)) payer=S.friends[0].id;
+      payMode='one'; payChecked=new Set([payer]);
       $('expDesc').value=''; $('expAmount').value=''; $('expDate').value=today();
     }
     $('formTitle').textContent=x?'Edit payment':'Add a payment';
@@ -780,9 +801,43 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
   $('fab').onclick=()=>openPaySheet();
 
   function renderPayers(){
-    $('payerChips').innerHTML=S.friends.map(f=>`<label class="chip"><input type="radio" name="payer" id="payer-${f.id}" value="${f.id}" ${f.id===payer?'checked':''}><span>${avatar(f.id,true)}${esc(f.name)}</span></label>`).join('');
+    const many=payMode==='many';
+    $('payOne').setAttribute('aria-pressed',!many); $('payMany').setAttribute('aria-pressed',many);
+    $('payerChips').hidden=many; $('payerList').hidden=!many; $('payerFoot').hidden=!many;
+    if(!many){
+      $('payerChips').innerHTML=S.friends.map(f=>`<label class="chip"><input type="radio" name="payer" id="payer-${f.id}" value="${f.id}" ${f.id===payer?'checked':''}><span>${avatar(f.id,true)}${esc(f.name)}</span></label>`).join('');
+      return;
+    }
+    $('payerList').innerHTML=S.friends.map(f=>{
+      const on=payChecked.has(f.id);
+      return `<label class="split-item"><input type="checkbox" id="pchk-${f.id}" data-pchk="${f.id}" ${on?'checked':''}>${avatar(f.id,true)}<span class="nm">${esc(f.name)}</span>`+
+        `<input type="text" inputmode="decimal" id="pval-${f.id}" data-pval="${f.id}" value="${esc(payVals[f.id]??'')}" placeholder="0.00" ${on?'':'disabled'} aria-label="Amount ${esc(f.name)} paid"></label>`;
+    }).join('');
+    updatePayFoot();
+  }
+  // Fill in even amounts for the ticked payers until someone types their own
+  function autoPay(){
+    if(payManual) return;
+    const ids=S.friends.map(f=>f.id).filter(id=>payChecked.has(id)), amt=toCents($('expAmount').value)||0;
+    const sh=ids.length&&amt?shares({amount:amt,mode:'equal',split:ids}):{};
+    payVals={}; ids.forEach(id=>payVals[id]=amt?(sh[id]/100).toFixed(2):'');
+  }
+  function updatePayFoot(){
+    if(payMode!=='many') return;
+    const amt=toCents($('expAmount').value)||0, foot=$('payerFoot'), msg=$('payerMsg');
+    const sum=[...payChecked].reduce((s,id)=>s+(toCents(payVals[id])||0),0), left=amt-sum;
+    foot.classList.toggle('bad',left!==0&&amt>0);
+    msg.textContent=!payChecked.size?'Tick everyone who paid':!amt?'Enter the total amount first':left===0?'Adds up ✓':(left>0?fmt(left)+' not covered yet':fmt(-left)+' more than the total');
   }
   $('payerChips').addEventListener('change',e=>{payer=e.target.value;});
+  $('payOne').onclick=()=>{ if(payMode==='one') return; payMode='one'; const ids=[...payChecked]; if(ids.length&&!payChecked.has(payer)) payer=ids[0]; renderPayers(); };
+  $('payMany').onclick=()=>{ if(payMode==='many') return; payMode='many'; payChecked=new Set([payer]); payManual=false; autoPay(); renderPayers(); };
+  $('payerList').addEventListener('change',e=>{
+    const id=e.target.dataset.pchk; if(!id) return;
+    e.target.checked?payChecked.add(id):(payChecked.delete(id),delete payVals[id]);
+    payManual=false; autoPay(); renderPayers();
+  });
+  $('payerList').addEventListener('input',e=>{const id=e.target.dataset.pval; if(id){payVals[id]=e.target.value; payManual=true; updatePayFoot();}});
   function renderSplit(){
     $('modeEqual').setAttribute('aria-pressed',mode==='equal'); $('modeExact').setAttribute('aria-pressed',mode==='exact');
     const amt=toCents($('expAmount').value)||0;
@@ -810,7 +865,10 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
   $('modeExact').onclick=()=>{mode='exact';renderSplit();};
   $('selAll').onclick=()=>{checked=new Set(S.friends.map(f=>f.id));renderSplit();};
   $('selNone').onclick=()=>{checked.clear();renderSplit();};
-  $('expAmount').oninput=()=>{mode==='equal'?renderSplit():updateFoot();};
+  $('expAmount').oninput=()=>{
+    mode==='equal'?renderSplit():updateFoot();
+    if(payMode==='many'){ if(!payManual){ autoPay(); renderPayers(); } else updatePayFoot(); }
+  };
   $('splitList').addEventListener('change',e=>{const id=e.target.dataset.chk; if(!id) return; e.target.checked?checked.add(id):checked.delete(id); renderSplit();});
   $('splitList').addEventListener('input',e=>{const id=e.target.dataset.exact; if(id){exactVals[id]=e.target.value; updateFoot();}});
 
@@ -820,9 +878,19 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
     const split=S.friends.map(f=>f.id).filter(id=>checked.has(id));
     if(!(amount>0)) return err.textContent='Enter an amount greater than zero.';
     if(!desc) return err.textContent='Say what the payment was for.';
+    let payers=null;
+    if(payMode==='many'){
+      const pm={}; S.friends.forEach(f=>{ const v=payChecked.has(f.id)?(toCents(payVals[f.id])||0):0; if(v>0) pm[f.id]=v; });
+      const ids=Object.keys(pm), sum=ids.reduce((s,id)=>s+pm[id],0);
+      if(!ids.length) return err.textContent='Tick who paid and enter how much each paid.';
+      if(sum!==amount) return err.textContent='The people who paid add up to '+fmt(sum)+', but the payment is '+fmt(amount)+'.';
+      payer=ids.reduce((a,b)=>pm[b]>pm[a]?b:a);   // biggest payer; also what older versions of the app will show
+      if(ids.length>1) payers=pm;
+    }
     if(!friend(payer)) return err.textContent='Choose who paid.';
     if(!split.length) return err.textContent='Pick at least one person to split with.';
     const exp={id:editing||uid(),desc,amount,payer,date:$('expDate').value||today(),mode,split};
+    if(payers) exp.payers=payers;
     if(mode==='exact'){
       exp.exact={}; split.forEach(id=>exp.exact[id]=toCents(exactVals[id])||0);
       const sum=split.reduce((s,id)=>s+exp.exact[id],0);
@@ -878,7 +946,7 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
     // payments by day
     const q=$('search').value.trim().toLowerCase(), fp=$('filterPerson').value;
     const rows=S.expenses.slice().sort((a,c)=>(c.date||'').localeCompare(a.date||''))
-      .filter(e=>(!q||e.desc.toLowerCase().includes(q)||nameOf(e.payer).toLowerCase().includes(q))&&(!fp||e.payer===fp||e.split.includes(fp)));
+      .filter(e=>(!q||e.desc.toLowerCase().includes(q)||payerIds(e).some(id=>nameOf(id).toLowerCase().includes(q)))&&(!fp||payerIds(e).includes(fp)||e.split.includes(fp)));
     let html='', lastDay=null;
     rows.forEach(e=>{
       if(e.date!==lastDay){ lastDay=e.date; html+=`<div class="day">${e.date?new Date(e.date+'T00:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'}):'No date'}</div>`; }
@@ -886,13 +954,13 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
         html+=`<div class="pay settlement">${avatar(e.payer)}<div style="min-width:0"><div class="desc">${esc(nameOf(e.payer))} paid ${esc(nameOf(e.split[0]))}</div><div class="meta">Settlement</div></div><div style="display:grid;justify-items:end;gap:2px"><span class="amt">${fmt(e.amount)}</span><button type="button" class="linkish" data-undo="${e.id}">Undo</button></div></div>`;
       } else {
         const who=e.split.length===S.friends.length&&e.mode==='equal'?'everyone':e.split.length===1?nameOf(e.split[0]):e.split.length+' people';
-        html+=`<button type="button" class="pay" data-edit="${e.id}">${avatar(e.payer)}<div style="min-width:0"><div class="desc">${esc(e.desc)}</div><div class="meta">${esc(nameOf(e.payer))} paid · split with ${esc(who)}${e.mode==='exact'?' (exact)':''}</div></div><span class="amt">${fmt(e.amount)}</span></button>`;
+        html+=`<button type="button" class="pay" data-edit="${e.id}">${avatar(payerIds(e)[0])}<div style="min-width:0"><div class="desc">${esc(e.desc)}</div><div class="meta">${esc(payerLabel(e))} paid · split with ${esc(who)}${e.mode==='exact'?' (exact)':''}</div></div><span class="amt">${fmt(e.amount)}</span></button>`;
       }
     });
     $('ledger').innerHTML=html||`<div class="empty">${S.expenses.length?'No payments match.':'No payments yet. Tap + to add the first one.'}</div>`;
 
     // friends
-    const used=new Set(); S.expenses.forEach(e=>{used.add(e.payer); e.split.forEach(id=>used.add(id));});
+    const used=new Set(); S.expenses.forEach(e=>{payerIds(e).forEach(id=>used.add(id)); e.split.forEach(id=>used.add(id));});
     $('friendCount').textContent=S.friends.length?S.friends.length+' on this trip':'';
     $('friends').innerHTML=S.friends.length?S.friends.map(f=>`<div class="person">${avatar(f.id)}<div style="min-width:0"><div class="n">${esc(f.name)}</div><div class="s">${used.has(f.id)?'paid '+fmt(b[f.id].paid):'no payments yet'}</div></div>${used.has(f.id)?'':`<button type="button" class="btn sm ghost danger" data-rm="${f.id}" aria-label="Remove ${esc(f.name)}">Remove</button>`}</div>`).join('')
       :'<div class="empty">Add everyone on the trip, including you.</div>';
@@ -1039,7 +1107,7 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
     const pay=[head];
     d.expenses.slice().sort((a,c)=>(a.date||'').localeCompare(c.date||'')).forEach(e=>{
       const sh=shares(e);
-      pay.push([e.date||'',e.desc,nameOf(e.payer),e.amount/100,e.settlement?'Settlement':e.mode==='exact'?'Exact amounts':'Equal split',
+      pay.push([e.date||'',e.desc,payerIds(e).length>1?payerIds(e).map(id=>nameOf(id)+' '+(paidMap(e)[id]/100).toFixed(2)).join(', '):nameOf(e.payer),e.amount/100,e.settlement?'Settlement':e.mode==='exact'?'Exact amounts':'Equal split',
         e.split.map(nameOf).join(', '),...d.friends.map(f=>sh[f.id]!=null?sh[f.id]/100:'')]);
     });
     pay.push([],['','Total (excluding settlements)','',total/100]);
