@@ -159,6 +159,31 @@ body[data-tab="people"] #view-people{display:grid}
 .transfer .amt{font-family:var(--mono);font-weight:600;font-size:17px;grid-column:1}
 .transfer .btn{grid-column:2;grid-row:1 / span 2;align-self:center}
 .done{padding:16px;border-radius:12px;background:var(--get-bg);color:var(--get);font-weight:600;text-align:center}
+
+/* Summary: headline, big payment cards, coloured balance cards */
+.verdict{font-size:clamp(24px,7vw,30px);font-weight:800;letter-spacing:-.01em;line-height:1.15;margin-top:4px;color:var(--on-navy)}
+.sec-title{font-family:var(--display);font-size:18px;font-weight:700;margin:4px 2px 10px}
+.xfer{background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:10px}
+.xfer-people{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px}
+.xfer-person{display:grid;justify-items:center;gap:6px;min-width:0}
+.xfer-person b{font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xfer-arrow{width:34px;height:34px;color:var(--ink-3)}
+.xfer-arrow svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.xfer-line{text-align:center;color:var(--ink-2);font-size:15px}
+.xfer-amt{text-align:center;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:clamp(28px,8.5vw,36px);font-weight:600;line-height:1.1;overflow-wrap:anywhere}
+.avatar.lg{width:52px;height:52px;font-size:20px}
+.done.big{padding:22px 16px;font-size:18px;border-radius:18px}
+.bal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.bcard{border-radius:16px;padding:14px;display:grid;gap:4px;background:var(--surface);border:1px solid var(--line);min-width:0}
+.bcard.get{background:var(--get-bg);border-color:transparent}
+.bcard.owe{background:var(--owe-bg);border-color:transparent}
+.bcard .who{display:flex;align-items:center;gap:8px;font-weight:700;min-width:0;margin-bottom:6px}
+.bcard .who span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bcard .st{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.bcard .amt{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:clamp(16px,4.6vw,22px);font-weight:600;color:var(--ink-3);white-space:nowrap;letter-spacing:-.02em}
+.bcard.get .st,.bcard.get .amt{color:var(--get)}
+.bcard.owe .st,.bcard.owe .amt{color:var(--owe)}
+.bcard .sub{font-size:12px;color:var(--ink-2);font-family:var(--mono);margin-top:2px}
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 
 .btn{min-height:44px;border:1px solid var(--line);background:var(--surface-2);border-radius:12px;padding:10px 16px;font-weight:600;white-space:nowrap}
@@ -327,24 +352,24 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
     <main class="views">
       <section class="view" id="view-balances" aria-label="Settle up">
         <div class="hero">
-          <div><div class="k">Total spent</div><div class="big" id="sTotal">0</div></div>
+          <div><div class="k">Trip summary</div><h2 class="verdict" id="verdict">No payments yet</h2></div>
           <div class="hero-stats">
-            <div><div class="k">People</div><div class="v" id="sFriends">0</div></div>
+            <div><div class="k">Total spent</div><div class="v" id="sTotal">0</div></div>
             <div><div class="k">Per person</div><div class="v" id="sAvg">0</div></div>
             <div><div class="k">Payments</div><div class="v" id="sCount">0</div></div>
           </div>
         </div>
-        <div class="panel">
-          <div class="panel-h"><h2>Settle up</h2><small id="settleCount"></small></div>
+        <section aria-labelledby="payHead">
+          <h3 class="sec-title" id="payHead">Who pays whom</h3>
           <div class="settle" id="settle"></div>
-          <div class="actions">
-            <button class="btn" id="exportBtn" type="button">Export to Excel</button>
-            <button class="btn" id="copySummary" type="button">Copy summary</button>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-h"><h2>Balances</h2><small>paid − share</small></div>
-          <div class="bal" id="balances"></div>
+        </section>
+        <section aria-labelledby="balHead">
+          <h3 class="sec-title" id="balHead">Everyone’s balance</h3>
+          <div class="bal-grid" id="balances"></div>
+        </section>
+        <div class="actions" style="margin-top:0">
+          <button class="btn" id="exportBtn" type="button">Export to Excel</button>
+          <button class="btn" id="copySummary" type="button">Copy summary</button>
         </div>
       </section>
 
@@ -911,7 +936,6 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
     const b=balancesOf(S), t=settlementsOf(b); lastTransfers=t;
     const real=S.expenses.filter(e=>!e.settlement), total=totalOf(S);
     $('sTotal').textContent=fmt(total);
-    $('sFriends').textContent=S.friends.length;
     $('sAvg').textContent=fmt(S.friends.length?Math.round(total/S.friends.length):0);
     $('sCount').textContent=real.length;
     $('exportBtn').disabled=!S.expenses.length;
@@ -923,19 +947,30 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
     if(!fDone){ $('stepHint').textContent=S.friends.length?'Add at least one more friend.':'Add everyone who’s on this trip, including you.'; $('stepAction').textContent='Add friends'; $('stepAction').onclick=()=>{setTab('people');$('friendName').focus();}; }
     else if(!pDone){ $('stepHint').textContent='Now add the first payment: who paid, and who it’s for.'; $('stepAction').textContent='Add payment'; $('stepAction').onclick=()=>openPaySheet(); }
 
-    // settle
-    $('settleCount').textContent=t.length?t.length+' payment'+(t.length>1?'s':''):'';
-    if(!S.expenses.length) $('settle').innerHTML='<div class="empty">No payments yet. Tap + to add one.</div>';
-    else if(!t.length) $('settle').innerHTML='<div class="done">Everyone is even. Nothing left to pay.</div>';
-    else $('settle').innerHTML=t.map((x,i)=>`<div class="transfer"><div class="who">${avatar(x.from,true)}<strong>${esc(nameOf(x.from))}</strong><span class="arrow" aria-label="pays">→</span>${avatar(x.to,true)}<strong>${esc(nameOf(x.to))}</strong></div><span class="amt">${fmt(x.amount)}</span><button type="button" class="btn sm" data-settle="${i}">Mark paid</button></div>`).join('');
+    // summary headline
+    $('verdict').textContent=!S.expenses.length?'No payments yet':!t.length?'Everyone is even':
+      t.length===1?`${nameOf(t[0].from)} pays ${nameOf(t[0].to)} ${fmt(t[0].amount)}`:`${t.length} payments settle this trip`;
 
-    // balances
-    const max=Math.max(1,...S.friends.map(f=>Math.abs(b[f.id].paid-b[f.id].share)));
-    $('balances').innerHTML=S.friends.length?S.friends.map(f=>{
-      const x=b[f.id], net=x.paid-x.share, w=Math.abs(net)/max*50;
-      const cls=net>0?'get':net<0?'owe':'even', label=net>0?'+'+fmt(net):net<0?'−'+fmt(-net):'even';
-      const bar=net>0?`<i style="left:50%;width:${w}%;background:var(--get)"></i>`:net<0?`<i style="right:50%;width:${w}%;background:var(--owe)"></i>`:'';
-      return `<div class="bal-row">${avatar(f.id)}<div><div class="bal-top"><span class="bal-name">${esc(f.name)}</span><span class="pill ${cls}" title="${net>0?'gets back':net<0?'owes':'settled'}">${label}</span></div><div class="bar">${bar}</div><div class="bal-sub">paid ${fmt(x.paid)} · share ${fmt(x.share)}</div></div></div>`;
+    // who pays whom
+    if(!S.expenses.length) $('settle').innerHTML='<div class="empty">No payments yet. Tap + to add one.</div>';
+    else if(!t.length) $('settle').innerHTML='<div class="done big">Everyone is even. Nothing left to pay.</div>';
+    else $('settle').innerHTML=t.map((x,i)=>`<div class="xfer">
+        <div class="xfer-people">
+          <div class="xfer-person">${avatar(x.from).replace('class="avatar"','class="avatar lg"')}<b>${esc(nameOf(x.from))}</b></div>
+          <div class="xfer-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></svg></div>
+          <div class="xfer-person">${avatar(x.to).replace('class="avatar"','class="avatar lg"')}<b>${esc(nameOf(x.to))}</b></div>
+        </div>
+        <div class="xfer-line"><b>${esc(nameOf(x.from))}</b> pays <b>${esc(nameOf(x.to))}</b></div>
+        <div class="xfer-amt">${fmt(x.amount)}</div>
+        <button type="button" class="btn block" data-settle="${i}">Mark as paid</button>
+      </div>`).join('');
+
+    // everyone's balance: biggest "gets back" first, biggest "owes" last
+    $('balances').innerHTML=S.friends.length?S.friends.slice().sort((p,q)=>(b[q.id].paid-b[q.id].share)-(b[p.id].paid-b[p.id].share)).map(f=>{
+      const x=b[f.id], net=x.paid-x.share, cls=net>0?'get':net<0?'owe':'even';
+      return `<div class="bcard ${cls}"><div class="who">${avatar(f.id,true)}<span>${esc(f.name)}</span></div>
+        <div class="st">${net>0?'Gets back':net<0?'Owes':'Settled'}</div><div class="amt">${net?fmt(Math.abs(net)):'—'}</div>
+        <div class="sub">paid ${fmt(x.paid)} · share ${fmt(x.share)}</div></div>`;
     }).join(''):'<div class="empty">No friends yet.</div>';
 
     // filter
@@ -1065,9 +1100,11 @@ body[data-screen="home"] .toast{bottom:calc(24px + env(safe-area-inset-bottom,0p
   // copy summary
   $('copySummary').onclick=()=>{
     const b=balancesOf(S), t=settlementsOf(b);
-    let txt=`🧳 ${S.name} — total ${fmt(totalOf(S))}\n\nBalances:\n`;
-    S.friends.forEach(f=>{const n=b[f.id].paid-b[f.id].share; txt+=`• ${f.name}: ${n>0?'gets back '+fmt(n):n<0?'owes '+fmt(-n):'settled'}\n`;});
-    txt+='\nTo settle up:\n'+(t.length?t.map(x=>`• ${nameOf(x.from)} → ${nameOf(x.to)}: ${fmt(x.amount)}`).join('\n'):'• Everyone is even!');
+    const total=totalOf(S), per=S.friends.length?Math.round(total/S.friends.length):0;
+    let txt=`🧳 ${S.name}\nTotal spent: ${fmt(total)} (${fmt(per)} per person)\n\n`;
+    txt+='💸 WHO PAYS WHOM\n'+(t.length?t.map(x=>`${nameOf(x.from)} pays ${nameOf(x.to)}: ${fmt(x.amount)}`).join('\n'):'Everyone is even. Nothing to pay.')+'\n\n';
+    txt+='📊 BALANCES\n';
+    S.friends.slice().sort((p,q)=>(b[q.id].paid-b[q.id].share)-(b[p.id].paid-b[p.id].share)).forEach(f=>{const n=b[f.id].paid-b[f.id].share; txt+=`${f.name}: ${n>0?'gets back '+fmt(n):n<0?'owes '+fmt(-n):'settled'}\n`;});
     copyText(txt,'Summary copied');
   };
   function copyText(txt,okMsg){
