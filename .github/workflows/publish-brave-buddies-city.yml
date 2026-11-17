@@ -14,8 +14,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Add the game and the homepage button
         run: |
-          curl -fsSL -o brave-buddies-city.html "https://d2ol7oe51mr4n9.cloudfront.net/user_39l3DMACayModxJOxtV6R2TTnVT/e780e891-5ffd-49a2-85a3-e622067af8a2.html"
-          test "$(wc -c < brave-buddies-city.html)" -eq 2189614
+          curl -fsSL -o brave-buddies-city.html "https://d2ol7oe51mr4n9.cloudfront.net/user_39l3DMACayModxJOxtV6R2TTnVT/a9485e46-830e-4c52-aee4-2377629ffc08.html"
+          test "$(wc -c < brave-buddies-city.html)" -eq 1830344
           head -c 15 brave-buddies-city.html | grep -q '<!DOCTYPE html>'
           python3 - <<'PY'
           p = 'index.html'
@@ -30,7 +30,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add brave-buddies-city.html index.html
-          git diff --cached --quiet || git commit -m "Update Brave Buddies City: third-person city view"
+          git diff --cached --quiet || git commit -m "Restore Brave Buddies City to the previous version"
           git push
       - name: Rebuild the website
         run: |
+
