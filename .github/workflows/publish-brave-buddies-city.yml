@@ -17,6 +17,8 @@ jobs:
           curl -fsSL -o brave-buddies-city.html "https://d2ol7oe51mr4n9.cloudfront.net/user_39l3DMACayModxJOxtV6R2TTnVT/a9485e46-830e-4c52-aee4-2377629ffc08.html"
           test "$(wc -c < brave-buddies-city.html)" -eq 1830344
           head -c 15 brave-buddies-city.html | grep -q '<!DOCTYPE html>'
+          curl -fsSL -o brave-buddies-3d.html "https://d2ol7oe51mr4n9.cloudfront.net/user_39l3DMACayModxJOxtV6R2TTnVT/185a0cc2-ad0e-4cec-8124-a1c7dd9ef995.html"
+          test "$(wc -c < brave-buddies-3d.html)" -eq 14631756
           python3 - <<'PY'
           p = 'index.html'
           s = open(p, encoding='utf-8').read()
@@ -29,9 +31,8 @@ jobs:
           PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add brave-buddies-city.html index.html
-          git diff --cached --quiet || git commit -m "Restore Brave Buddies City to the previous version"
+          git add brave-buddies-city.html brave-buddies-3d.html index.html
+          git diff --cached --quiet || git commit -m "Add Brave Buddies 3D test version"
           git push
       - name: Rebuild the website
         run: |
-
