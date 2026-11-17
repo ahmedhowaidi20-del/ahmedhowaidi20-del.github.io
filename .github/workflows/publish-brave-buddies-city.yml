@@ -17,8 +17,8 @@ jobs:
           curl -fsSL -o brave-buddies-city.html "https://d2ol7oe51mr4n9.cloudfront.net/user_39l3DMACayModxJOxtV6R2TTnVT/9303b458-fa87-49d7-bddd-51aa01a12857.html"
           test "$(wc -c < brave-buddies-city.html)" -eq 2570765
           head -c 15 brave-buddies-city.html | grep -q '<!DOCTYPE html>'
-          curl -fsSL -o brave-buddies-3d.html "https://d2ol7oe51mr4n9.cloudfront.net/user_39l3DMACayModxJOxtV6R2TTnVT/ff1769c3-c19e-4d1d-9d8e-0045d001f59e.html"
-          test "$(wc -c < brave-buddies-3d.html)" -eq 16487624
+          curl -fsSL -o brave-buddies-3d.html "https://d2ol7oe51mr4n9.cloudfront.net/user_39l3DMACayModxJOxtV6R2TTnVT/92f7259d-01bf-4637-aa57-50f9331e6bf7.html"
+          test "$(wc -c < brave-buddies-3d.html)" -eq 16487720
           python3 - <<'PY'
           p = 'index.html'
           s = open(p, encoding='utf-8').read()
@@ -32,6 +32,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add brave-buddies-city.html brave-buddies-3d.html index.html
-          git diff --cached --quiet || git commit -m "Brave Buddies: real machine and water sounds, Baba catch reactions"
+          git diff --cached --quiet || git commit -m "Brave Buddies 3D: Badoory reappears after a game"
           git push
-
