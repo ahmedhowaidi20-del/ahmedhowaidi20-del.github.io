@@ -1,0 +1,37 @@
+name: Publish Brave Buddies City
+on:
+  push:
+    paths:
+      - '.github/workflows/publish-brave-buddies-city.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add the game and the homepage button
+        run: |
+          curl -fsSL -o brave-buddies-city.html "https://d2ol7oe51mr4n9.cloudfront.net/user_39l3DMACayModxJOxtV6R2TTnVT/a9485e46-830e-4c52-aee4-2377629ffc08.html"
+          test "$(wc -c < brave-buddies-city.html)" -eq 1830344
+          head -c 15 brave-buddies-city.html | grep -q '<!DOCTYPE html>'
+          python3 - <<'PY'
+          p = 'index.html'
+          s = open(p, encoding='utf-8').read()
+          a = '<a href="brave-buddies.html" class="btn-teal"><span>🦸 Brave Buddies</span></a>'
+          b = '<a href="brave-buddies-city.html" class="btn-teal"><span>🏙️ Brave Buddies City</span></a>'
+          if b not in s:
+              assert a in s
+              s = s.replace(a, a + b, 1)
+              open(p, 'w', encoding='utf-8', newline='').write(s)
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add brave-buddies-city.html index.html
+          git diff --cached --quiet || git commit -m "Add Brave Buddies City game and homepage button"
+          git push
+      - name: Rebuild the website
+        run: |
+          curl -sS -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${{ github.repository }}/pages/builds" || true
